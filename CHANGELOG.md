@@ -1,3 +1,11 @@
+## 2.2.2
+
+* type null safe
+
+## 2.2.1
+
+* Prepare for upcoming change to HttpRequest and HttpClientResponse
+
 ## 2.2.0
 
 * Add note about root path in error string when instance path is empty
