@@ -305,7 +305,7 @@ class SchemaNode {
     return definitions;
   }
 
-  String wrap(String s, {String port: '', String color: 'wheat'}) => s == null
+  String wrap(String s, {String port = '', String color = 'wheat'}) => s == null
       ? ''
       : '<tr><td bgcolor="$color" align="center" colspan="2" port="$port"><font color="black">$s</font></td></tr>';
 
