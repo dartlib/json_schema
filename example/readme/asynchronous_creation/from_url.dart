@@ -54,7 +54,8 @@ main() async {
   // For Browser:
   // configureJsonSchemaForBrowser();
 
-  final url = "https://raw.githubusercontent.com/json-schema-org/JSON-Schema-Test-Suite/master/remotes/integer.json";
+  final url =
+      "https://raw.githubusercontent.com/json-schema-org/JSON-Schema-Test-Suite/master/remotes/integer.json";
 
   final schema = await JsonSchema.createSchemaFromUrl(url);
 

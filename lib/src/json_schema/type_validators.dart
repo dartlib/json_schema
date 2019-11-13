@@ -21,7 +21,8 @@ class TypeValidators {
     enumValues.forEach((v) {
       for (int j = i + 1; j < value.length; j++) {
         if (JsonSchemaUtils.jsonEqual(value[i], value[j]))
-          throw FormatExceptions.error('enum values must be unique: $value [$i]==[$j]');
+          throw FormatExceptions.error(
+              'enum values must be unique: $value [$i]==[$j]');
       }
       i++;
     });
@@ -47,14 +48,16 @@ class TypeValidators {
     } else if (value is List) {
       typeList = value.map((v) => SchemaType.fromString(v)).toList();
     } else {
-      throw FormatExceptions.error('$key must be string or array: ${value.runtimeType}');
+      throw FormatExceptions.error(
+          '$key must be string or array: ${value.runtimeType}');
     }
     if (!typeList.contains(null)) return typeList;
     throw FormatExceptions.error('$key(s) invalid $value');
   }
 
   static dynamic nonNegative(String key, dynamic value) {
-    if (value < 0) throw FormatExceptions.error('$key must be non-negative: $value');
+    if (value < 0)
+      throw FormatExceptions.error('$key must be non-negative: $value');
     return value;
   }
 

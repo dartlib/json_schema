@@ -54,11 +54,13 @@ void main([List<String> args]) {
   configureJsonSchemaForVm();
 
   if (args?.isEmpty == true) {
-    Logger.root.onRecord.listen((LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
+    Logger.root.onRecord.listen(
+        (LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
     Logger.root.level = Level.OFF;
   }
 
-  final Directory testSuiteFolder = new Directory('./test/invalid_schemas/draft4');
+  final Directory testSuiteFolder =
+      new Directory('./test/invalid_schemas/draft4');
 
   testSuiteFolder.listSync().forEach((testEntry) {
     final String shortName = path.basename(testEntry.path);
@@ -73,13 +75,15 @@ void main([List<String> args]) {
             final catchException = expectAsync1((e) {
               _logger.info('Caught expected $e');
               if (!(e is FormatException)) {
-                _logger.info('${shortName} threw an unexpected error type of ${e.runtimeType}');
+                _logger.info(
+                    '${shortName} threw an unexpected error type of ${e.runtimeType}');
               }
               expect(e is FormatException, true);
             });
 
             try {
-              await JsonSchema.createSchemaAsync(schemaData, schemaVersion: SchemaVersion.draft4);
+              await JsonSchema.createSchemaAsync(schemaData,
+                  schemaVersion: SchemaVersion.draft4);
               fail('Schema is expected to be invalid, but was not.');
             } catch (e) {
               catchException(e);

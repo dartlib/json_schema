@@ -46,7 +46,8 @@ class JsonSchemaValidationRegexes {
       r'(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.'
       r'(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$');
 
-  static RegExp ipv6 = new RegExp(r'(^([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,6}$)|'
+  static RegExp ipv6 = new RegExp(
+      r'(^([0-9a-f]{1,4}:){1,1}(:[0-9a-f]{1,4}){1,6}$)|'
       r'(^([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}$)|'
       r'(^([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}$)|'
       r'(^([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}$)|'
@@ -78,7 +79,8 @@ class SchemaVersion implements Comparable<SchemaVersion> {
 
   static const SchemaVersion draft6 = const SchemaVersion._(1);
 
-  static List<SchemaVersion> get values => const <SchemaVersion>[draft4, draft6];
+  static List<SchemaVersion> get values =>
+      const <SchemaVersion>[draft4, draft6];
 
   final int value;
 

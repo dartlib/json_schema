@@ -46,7 +46,10 @@ import 'package:json_schema/schema_dot.dart';
 main() {
   configureJsonSchemaForVm();
 
-  final sourcePath = join(dirname(dirname(absolute(Platform.script.toFilePath()))), 'dot_samples', 'schemas');
+  final sourcePath = join(
+      dirname(dirname(absolute(Platform.script.toFilePath()))),
+      'dot_samples',
+      'schemas');
   final outPath = join(dirname(sourcePath), 'schemaout');
   new Directory(sourcePath).listSync().forEach((jsonFile) {
     final fname = jsonFile.path;
@@ -58,7 +61,8 @@ main() {
       schema.refMap.forEach((key, ref) => print('$key : $ref'));
       new File(dotFilename).writeAsStringSync(createDot(schema));
     }).then((_) {
-      Process.run('dot', ['-Tpng', '-o$pngOut', dotFilename]).then((ProcessResult processResult) {
+      Process.run('dot', ['-Tpng', '-o$pngOut', dotFilename])
+          .then((ProcessResult processResult) {
         if (processResult.exitCode == 0) {
           print('Finished running dot -Tpng -o$pngOut $fname');
         } else {
