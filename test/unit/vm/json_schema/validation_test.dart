@@ -38,8 +38,8 @@
 
 library json_schema.test_validation;
 
+import 'dart:convert';
 import 'dart:io';
-import 'package:dart2_constant/convert.dart' as convert;
 import 'package:json_schema/json_schema.dart';
 import 'package:json_schema/vm.dart';
 import 'package:json_schema/src/json_schema/constants.dart';
@@ -99,7 +99,7 @@ void main([List<String> args]) {
           // Skip these for now - reason shown.
           if (skipFiles.contains(path.basename(testEntry.path))) return;
 
-          final List tests = convert.json.decode((testEntry).readAsStringSync());
+          final List tests = json.decode((testEntry).readAsStringSync());
           tests.forEach((testEntry) {
             final schemaData = testEntry['schema'];
             final description = testEntry['description'];
@@ -141,14 +141,14 @@ void main([List<String> args]) {
   final RefProvider syncRefProvider = (String ref) {
     switch (ref) {
       case 'http://localhost:1234/integer.json':
-        return JsonSchema.createSchema(convert.json.decode(r'''
+        return JsonSchema.createSchema(json.decode(r'''
           {
             "type": "integer"
           }
         '''));
         break;
       case 'http://localhost:1234/subSchemas.json#/integer':
-        return JsonSchema.createSchema(convert.json.decode(r'''
+        return JsonSchema.createSchema(json.decode(r'''
           {
             "integer": {
               "type": "integer"
@@ -160,7 +160,7 @@ void main([List<String> args]) {
         ''')).resolvePath('#/integer');
         break;
       case 'http://localhost:1234/subSchemas.json#/refToInteger':
-        return JsonSchema.createSchema(convert.json.decode(r'''
+        return JsonSchema.createSchema(json.decode(r'''
           {
             "integer": {
               "type": "integer"
@@ -172,14 +172,14 @@ void main([List<String> args]) {
         ''')).resolvePath('#/refToInteger');
         break;
       case 'http://localhost:1234/folder/folderInteger.json':
-        return JsonSchema.createSchema(convert.json.decode(r'''
+        return JsonSchema.createSchema(json.decode(r'''
           {
             "type": "integer"
           }
         '''));
         break;
       case 'http://localhost:1234/name.json#/definitions/orNull':
-        return JsonSchema.createSchema(convert.json.decode(r'''
+        return JsonSchema.createSchema(json.decode(r'''
           {
             "definitions": {
               "orNull": {

@@ -46,7 +46,7 @@
 /// the file, otherwise written to stdout.
 ///
 import 'dart:async';
-import 'package:dart2_constant/convert.dart' as convert2;
+import 'dart:convert';
 import 'dart:convert' as convert;
 import 'dart:io';
 
@@ -173,7 +173,7 @@ main(List<String> args) {
   }
 
   completer.future.then((schemaText) {
-    final Future schema = JsonSchema.createSchemaAsync(convert2.json.decode(schemaText));
+    final Future schema = JsonSchema.createSchemaAsync(json.decode(schemaText));
     schema.then((schema) {
       final String dot = createDot(schema);
       if (options['out-file'] != null) {
