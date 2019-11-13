@@ -53,23 +53,23 @@ Future<JsonSchema> createSchemaFromUrlVm(String schemaUrl,
   Map schemaMap;
   if (uri.scheme == 'http' || uri.scheme == 'https') {
     // Setup the HTTP request.
-    final httpRequest = await new HttpClient().getUrl(uri);
+    final httpRequest = await HttpClient().getUrl(uri);
     httpRequest.followRedirects = true;
     // Fetch the response
     final response = await httpRequest.close();
     // Convert the response into a string
     if (response.statusCode == HttpStatus.NOT_FOUND) {
-      throw new ArgumentError('Schema at URL: $schemaUrl can\'t be found.');
+      throw ArgumentError('Schema at URL: $schemaUrl can\'t be found.');
     }
-    final schemaText = await new convert.Utf8Decoder().bind(response).join();
+    final schemaText = await convert.Utf8Decoder().bind(response).join();
     schemaMap = json.decode(schemaText);
   } else if (uri.scheme == 'file' || uri.scheme == '') {
     final fileString =
-        await new File(uri.scheme == 'file' ? uri.toFilePath() : schemaUrl)
+        await File(uri.scheme == 'file' ? uri.toFilePath() : schemaUrl)
             .readAsString();
     schemaMap = json.decode(fileString);
   } else {
-    throw new FormatException(
+    throw FormatException(
         'Url schema must be http, file, or empty: $schemaUrl');
   }
   // HTTP servers / file systems ignore fragments, so resolve a sub-map if a fragment was specified.

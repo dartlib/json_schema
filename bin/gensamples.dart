@@ -51,7 +51,7 @@ main() {
       'dot_samples',
       'schemas');
   final outPath = join(dirname(sourcePath), 'schemaout');
-  new Directory(sourcePath).listSync().forEach((jsonFile) {
+  Directory(sourcePath).listSync().forEach((jsonFile) {
     final fname = jsonFile.path;
     final base = basenameWithoutExtension(fname);
     final dotFilename = join(outPath, '$base.dot');
@@ -59,7 +59,7 @@ main() {
 
     JsonSchema.createSchemaFromUrl(fname).then((schema) {
       schema.refMap.forEach((key, ref) => print('$key : $ref'));
-      new File(dotFilename).writeAsStringSync(createDot(schema));
+      File(dotFilename).writeAsStringSync(createDot(schema));
     }).then((_) {
       Process.run('dot', ['-Tpng', '-o$pngOut', dotFilename])
           .then((ProcessResult processResult) {

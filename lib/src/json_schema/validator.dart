@@ -93,7 +93,7 @@ class Validator {
       try {
         data = json.decode(instance);
       } catch (e) {
-        throw new ArgumentError(
+        throw ArgumentError(
             'JSON instance provided to validate is not valid JSON.');
       }
     }
@@ -239,8 +239,7 @@ class Validator {
     final singleSchema = schema.items;
     if (singleSchema != null) {
       instance.data.asMap().forEach((index, item) {
-        final itemInstance =
-            new Instance(item, path: '${instance.path}/$index');
+        final itemInstance = Instance(item, path: '${instance.path}/$index');
         _validate(singleSchema, itemInstance);
       });
     } else {
@@ -252,13 +251,13 @@ class Validator {
         for (int i = 0; i < end; i++) {
           assert(items[i] != null);
           final itemInstance =
-              new Instance(instance.data[i], path: '${instance.path}/$i');
+              Instance(instance.data[i], path: '${instance.path}/$i');
           _validate(items[i], itemInstance);
         }
         if (schema.additionalItemsSchema != null) {
           for (int i = end; i < actual; i++) {
             final itemInstance =
-                new Instance(instance.data[i], path: '${instance.path}/$i');
+                Instance(instance.data[i], path: '${instance.path}/$i');
             _validate(schema.additionalItemsSchema, itemInstance);
           }
         } else if (schema.additionalItemsBool != null) {
@@ -295,21 +294,21 @@ class Validator {
 
     if (schema.contains != null) {
       if (!instance.data
-          .any((item) => new Validator(schema.contains).validate(item))) {
+          .any((item) => Validator(schema.contains).validate(item))) {
         _err('contains violated: $instance', instance.path, schema.path);
       }
     }
   }
 
   void _validateAllOf(JsonSchema schema, Instance instance) {
-    if (!schema.allOf.every((s) => new Validator(s).validate(instance))) {
+    if (!schema.allOf.every((s) => Validator(s).validate(instance))) {
       _err('${schema.path}: allOf violated ${instance}', instance.path,
           schema.path + '/allOf');
     }
   }
 
   void _validateAnyOf(JsonSchema schema, Instance instance) {
-    if (!schema.anyOf.any((s) => new Validator(s).validate(instance))) {
+    if (!schema.anyOf.any((s) => Validator(s).validate(instance))) {
       // TODO: deal with /anyOf
       _err('${schema.path}/anyOf: anyOf violated ($instance, ${schema.anyOf})',
           instance.path, schema.path + '/anyOf');
@@ -318,7 +317,7 @@ class Validator {
 
   void _validateOneOf(JsonSchema schema, Instance instance) {
     try {
-      schema.oneOf.singleWhere((s) => new Validator(s).validate(instance));
+      schema.oneOf.singleWhere((s) => Validator(s).validate(instance));
     } on StateError catch (notOneOf) {
       // TODO: deal with oneOf
       _err('${schema.path}/oneOf: violated ${notOneOf.message}', instance.path,
@@ -327,7 +326,7 @@ class Validator {
   }
 
   void _validateNot(JsonSchema schema, Instance instance) {
-    if (new Validator(schema.notSchema).validate(instance)) {
+    if (Validator(schema.notSchema).validate(instance)) {
       // TODO: deal with .notSchema
       _err('${schema.notSchema.path}: not violated', instance.path,
           schema.notSchema.path);
@@ -462,7 +461,7 @@ class Validator {
         _validate(schema.propertyNamesSchema, k);
       }
 
-      final newInstance = new Instance(v, path: '${instance.path}/$k');
+      final newInstance = Instance(v, path: '${instance.path}/$k');
 
       bool propCovered = false;
       final JsonSchema propSchema = schema.properties[k];
@@ -505,7 +504,7 @@ class Validator {
   void _schemaDependenciesValidation(JsonSchema schema, Instance instance) {
     schema.schemaDependencies.forEach((k, otherSchema) {
       if (instance.data.containsKey(k)) {
-        if (!new Validator(otherSchema).validate(instance)) {
+        if (!Validator(otherSchema).validate(instance)) {
           _err('prop $k violated schema dependency', instance.path,
               otherSchema.path);
         }
@@ -547,7 +546,7 @@ class Validator {
 
   void _validate(JsonSchema schema, dynamic instance) {
     if (instance is! Instance) {
-      instance = new Instance(instance);
+      instance = Instance(instance);
     }
 
     /// If the [JsonSchema] is a bool, always return this value.
@@ -585,8 +584,8 @@ class Validator {
     // _logger.warning(msg); TODO: re-add logger
 
     schemaPath = schemaPath.replaceFirst('#', '');
-    _errors.add(new ValidationError._(instancePath, schemaPath, msg));
-    if (!_reportMultipleErrors) throw new FormatException(msg);
+    _errors.add(ValidationError._(instancePath, schemaPath, msg));
+    if (!_reportMultipleErrors) throw FormatException(msg);
   }
 
   JsonSchema _rootSchema;

@@ -48,7 +48,7 @@ CreateJsonSchemaFromUrl get globalCreateJsonSchemaFromUrl =>
 set globalCreateJsonSchemaFromUrl(
     CreateJsonSchemaFromUrl createJsonSchemaFromUrl) {
   if (createJsonSchemaFromUrl == null) {
-    throw new ArgumentError('json_schema: Global createJsonSchemaFromUrl '
+    throw ArgumentError('json_schema: Global createJsonSchemaFromUrl '
         'implementation must not be null.');
   }
 
@@ -64,10 +64,10 @@ void resetGlobalTransportPlatform() {
 
 /// Default validators for all [JsonSchema]s.
 DefaultValidators get defaultValidators =>
-    _defaultValidators ?? new DefaultValidators();
+    _defaultValidators ?? DefaultValidators();
 set defaultValidators(DefaultValidators defaultValidators) {
   if (defaultValidators == null) {
-    throw new ArgumentError('json_schema: default validators '
+    throw ArgumentError('json_schema: default validators '
         'implementation must not be null.');
   }
 
