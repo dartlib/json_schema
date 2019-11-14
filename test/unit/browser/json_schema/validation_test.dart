@@ -49,8 +49,7 @@ void main([List<String> args]) {
   configureJsonSchemaForBrowser();
 
   if (args?.isEmpty == true) {
-    Logger.root.onRecord.listen(
-        (LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
+    Logger.root.onRecord.listen((LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
     Logger.root.level = Level.OFF;
   }
 

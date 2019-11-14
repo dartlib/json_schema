@@ -36,8 +36,7 @@
 //     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //     THE SOFTWARE.
 
-import 'package:dart_dev/dart_dev.dart'
-    show dev, config, TestRunnerConfig, Environment;
+import 'package:dart_dev/dart_dev.dart' show dev, config, TestRunnerConfig, Environment;
 
 main(List<String> args) async {
   config.analyze
@@ -45,26 +44,13 @@ main(List<String> args) async {
     ..fatalWarnings = true
     ..strong = true;
 
-  config.copyLicense.directories = const [
-    'bin/',
-    'example/',
-    'lib/',
-    'test/',
-    'tool/'
-  ];
+  config.copyLicense.directories = const ['bin/', 'example/', 'lib/', 'test/', 'tool/'];
 
   config.coverage..reportOn = ['lib/'];
 
   config.format
     ..lineLength = 120
-    ..paths = const [
-      'bin/',
-      'dot_samples/',
-      'example',
-      'lib/',
-      'test/',
-      'tool/'
-    ];
+    ..paths = const ['bin/', 'dot_samples/', 'example', 'lib/', 'test/', 'tool/'];
 
   config.format.exclude = const [
     'test/unit/generated_runner_test.dart',
@@ -73,14 +59,8 @@ main(List<String> args) async {
   ];
 
   config.genTestRunner.configs = [
-    TestRunnerConfig(
-        directory: 'test/unit/browser',
-        env: Environment.browser,
-        filename: 'generated_runner_test'),
-    TestRunnerConfig(
-        directory: 'test/unit/vm',
-        env: Environment.vm,
-        filename: 'generated_runner_test'),
+    TestRunnerConfig(directory: 'test/unit/browser', env: Environment.browser, filename: 'generated_runner_test'),
+    TestRunnerConfig(directory: 'test/unit/vm', env: Environment.vm, filename: 'generated_runner_test'),
   ];
 
   config.test.platforms = ['vm', 'chrome'];

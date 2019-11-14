@@ -88,18 +88,8 @@ Display this help screen
         abbr: 'h',
         defaultsTo: false);
 
-    _parser.addOption('in-uri',
-        help: '',
-        defaultsTo: null,
-        allowMultiple: false,
-        abbr: 'i',
-        allowed: null);
-    _parser.addOption('out-file',
-        help: '',
-        defaultsTo: null,
-        allowMultiple: false,
-        abbr: 'o',
-        allowed: null);
+    _parser.addOption('in-uri', help: '', defaultsTo: null, allowMultiple: false, abbr: 'i', allowed: null);
+    _parser.addOption('out-file', help: '', defaultsTo: null, allowMultiple: false, abbr: 'o', allowed: null);
     _parser.addOption('log-level',
         help: r'''
 Select log level from:
@@ -151,15 +141,13 @@ Select log level from:
 final _logger = Logger('schemadot');
 
 main(List<String> args) {
-  Logger.root.onRecord.listen(
-      (LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
+  Logger.root.onRecord.listen((LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
   Logger.root.level = Level.OFF;
   final Map argResults = _parseArgs(args);
   final Map options = argResults['options'];
 
   try {
-    if (options['in-uri'] == null)
-      throw ArgumentError('option: in-uri is required');
+    if (options['in-uri'] == null) throw ArgumentError('option: in-uri is required');
   } on ArgumentError catch (e) {
     print(e);
     _usage();
@@ -173,8 +161,7 @@ main(List<String> args) {
     HttpClient()
         .getUrl(uri)
         .then((HttpClientRequest request) => request.close())
-        .then((HttpClientResponse response) =>
-            convert.Utf8Decoder().bind(response).join())
+        .then((HttpClientResponse response) => convert.Utf8Decoder().bind(response).join())
         .then((text) {
       completer.complete(text);
     });

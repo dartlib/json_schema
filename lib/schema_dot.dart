@@ -43,8 +43,7 @@ import 'package:json_schema/json_schema.dart';
 
 /// Represents one node in the schema diagram
 ///
-@Deprecated(
-    'This functionality is not maintained, is untested, and may be removed in a future release.')
+@Deprecated('This functionality is not maintained, is untested, and may be removed in a future release.')
 class SchemaNode {
   /// Referenced schema this node portrays
   JsonSchema schema;
@@ -87,14 +86,11 @@ class SchemaNode {
     final typeList = schema.typeList;
     if (typeList == null) {
       if (schema.oneOf.length > 0) {
-        result =
-            'oneOf:${schema.oneOf.map((schema) => schemaType(schema)).toList()}';
+        result = 'oneOf:${schema.oneOf.map((schema) => schemaType(schema)).toList()}';
       } else if (schema.anyOf.length > 0) {
-        result =
-            'anyOf:${schema.anyOf.map((schema) => schemaType(schema)).toList()}';
+        result = 'anyOf:${schema.anyOf.map((schema) => schemaType(schema)).toList()}';
       } else if (schema.allOf.length > 0) {
-        result =
-            'allOf:${schema.allOf.map((schema) => schemaType(schema)).toList()}';
+        result = 'allOf:${schema.allOf.map((schema) => schemaType(schema)).toList()}';
       } else if (schema.defaultValue != null) {
         result = 'default=${schema.defaultValue}';
       } else if (schema.ref != null) {
@@ -187,8 +183,7 @@ class SchemaNode {
       schema.anyOf.forEach((anyOfSchema) {
         final String port = '${i++}';
         makeSchemaLink(port, schema, anyOfSchema);
-        anyOf.add(wrap(abbreviatedString('${schemaType(anyOfSchema)}', 30),
-            color: 'grey', port: port));
+        anyOf.add(wrap(abbreviatedString('${schemaType(anyOfSchema)}', 30), color: 'grey', port: port));
       });
     }
     return anyOf;
@@ -202,8 +197,7 @@ class SchemaNode {
       schema.oneOf.forEach((oneOfSchema) {
         final String port = '${i++}';
         makeSchemaLink(port, schema, oneOfSchema);
-        oneOf.add(wrap(abbreviatedString('${schemaType(oneOfSchema)}', 30),
-            color: 'grey', port: port));
+        oneOf.add(wrap(abbreviatedString('${schemaType(oneOfSchema)}', 30), color: 'grey', port: port));
       });
     }
     return oneOf;
@@ -217,8 +211,7 @@ class SchemaNode {
       schema.allOf.forEach((allOfSchema) {
         final String port = '${i++}';
         makeSchemaLink(port, schema, allOfSchema);
-        allOf.add(wrap(abbreviatedString('${schemaType(allOfSchema)}', 30),
-            color: 'grey', port: port));
+        allOf.add(wrap(abbreviatedString('${schemaType(allOfSchema)}', 30), color: 'grey', port: port));
       });
     }
     return allOf;
@@ -249,9 +242,7 @@ class SchemaNode {
   makeSchemaPort(String port, JsonSchema schema) => '"${schema.path}":"$port"';
 
   makeSchemaLink(String port, JsonSchema src, JsonSchema target) {
-    if (schemaShown(target))
-      links.add(
-          '${makeSchemaPort(port, src)} -> ${makeSchemaPort("@path", target)}');
+    if (schemaShown(target)) links.add('${makeSchemaPort(port, src)} -> ${makeSchemaPort("@path", target)}');
   }
 
   List<String> get additionalPropertiesSchema {
@@ -261,8 +252,7 @@ class SchemaNode {
       result.add(wrap('Additional Properties', color: 'lemonchiffon'));
       final String port = 'mustBe';
       makeSchemaLink(port, schema, other);
-      result.add(wrapRowDistinct('Must Be: ',
-          abbreviatedString(schemaType(other).toString(), 30), port));
+      result.add(wrapRowDistinct('Must Be: ', abbreviatedString(schemaType(other).toString(), 30), port));
     }
     return result;
   }
@@ -274,19 +264,15 @@ class SchemaNode {
       final sortedProps = List.from(schema.properties.keys)..sort();
       sortedProps.forEach((prop) {
         final propertySchema = schema.properties[prop];
-        final String requiredPrefix =
-            schema.propertyRequired(prop) ? '! ' : '? ';
+        final String requiredPrefix = schema.propertyRequired(prop) ? '! ' : '? ';
         final String port = '@$prop';
         if (schemaShown(propertySchema)) {
           makeSchemaLink(port, schema, propertySchema);
-        } else if (propertySchema.items is JsonSchema &&
-            schemaShown(propertySchema.items)) {
+        } else if (propertySchema.items is JsonSchema && schemaShown(propertySchema.items)) {
           makeSchemaLink(port, schema, propertySchema.items);
         }
         props.add(wrapRowDistinct(
-            '$requiredPrefix$prop',
-            abbreviatedString(schemaType(propertySchema).toString(), 30),
-            port));
+            '$requiredPrefix$prop', abbreviatedString(schemaType(propertySchema).toString(), 30), port));
       });
     }
     return props;
@@ -295,8 +281,8 @@ class SchemaNode {
   List<String> get definitionEntries {
     final List<String> definitions = [];
     if (schema.definitions.length > 0) {
-      definitions.add(
-          '<tr><td bgcolor="wheat" align="center" colspan="2"><font color="black">Definitions</font></td></tr>');
+      definitions
+          .add('<tr><td bgcolor="wheat" align="center" colspan="2"><font color="black">Definitions</font></td></tr>');
       final sortedDefinitions = List.from(schema.definitions.keys)..sort();
       sortedDefinitions.forEach((key) {
         definitions.add(wrapRowDistinct(key, '', '${schema.path}@$key'));
@@ -312,13 +298,9 @@ class SchemaNode {
   String wrapRowDistinct(String first, String second, [String port = '']) =>
       '<tr><td align="left" port="$port">$first</td>$first<td bgcolor="grey" align="right">$second</td></tr>';
 
-  String get title => schema.title != null
-      ? abbreviatedString("title=${schema.title}", 30)
-      : null;
+  String get title => schema.title != null ? abbreviatedString("title=${schema.title}", 30) : null;
 
-  String get description => schema.description != null
-      ? abbreviatedString('descr=${schema.description}', 30)
-      : null;
+  String get description => schema.description != null ? abbreviatedString('descr=${schema.description}', 30) : null;
 
   String abbreviatedString(String s, [int len = 15]) {
     if (s == null) return s;
@@ -332,8 +314,7 @@ class SchemaNode {
 }
 
 /// Return a dot specification for [schema]
-@Deprecated(
-    'This functionality is not maintained, is untested, and may be removed in a future release.')
+@Deprecated('This functionality is not maintained, is untested, and may be removed in a future release.')
 String createDot(JsonSchema schema) => '''
 digraph G {
   fontname = "Bitstream Vera Sans"

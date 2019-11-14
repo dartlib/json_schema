@@ -67,8 +67,7 @@ void main() {
     });
 
     group('string', () {
-      final schema = createObjectSchema(
-          {'minLength': 3, 'maxLength': 5, 'pattern': '^a.*\$'});
+      final schema = createObjectSchema({'minLength': 3, 'maxLength': 5, 'pattern': '^a.*\$'});
 
       test('minLength', () {
         final errors = schema.validateWithErrors({'someKey': 'ab'});
@@ -117,8 +116,7 @@ void main() {
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/nonexclusive');
-        expect(errors[0].schemaPath,
-            '/properties/someKey/properties/nonexclusive');
+        expect(errors[0].schemaPath, '/properties/someKey/properties/nonexclusive');
         expect(errors[0].message, contains('maximum'));
       });
 
@@ -129,8 +127,7 @@ void main() {
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/nonexclusive');
-        expect(errors[0].schemaPath,
-            '/properties/someKey/properties/nonexclusive');
+        expect(errors[0].schemaPath, '/properties/someKey/properties/nonexclusive');
         expect(errors[0].message, contains('minimum'));
       });
 
@@ -141,8 +138,7 @@ void main() {
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/exclusive');
-        expect(
-            errors[0].schemaPath, '/properties/someKey/properties/exclusive');
+        expect(errors[0].schemaPath, '/properties/someKey/properties/exclusive');
         expect(errors[0].message, contains('exclusiveMaximum'));
       });
 
@@ -153,8 +149,7 @@ void main() {
 
         expect(errors.length, 1);
         expect(errors[0].instancePath, '/someKey/exclusive');
-        expect(
-            errors[0].schemaPath, '/properties/someKey/properties/exclusive');
+        expect(errors[0].schemaPath, '/properties/someKey/properties/exclusive');
         expect(errors[0].message, contains('exclusiveMinimum'));
       });
 
@@ -356,8 +351,7 @@ void main() {
     test('URI reference format', () {
       final schema = createObjectSchema({'format': 'uri-reference'});
 
-      final errors =
-          schema.validateWithErrors({'someKey': '\\\\WINDOWS\\fileshare'});
+      final errors = schema.validateWithErrors({'someKey': '\\\\WINDOWS\\fileshare'});
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -368,8 +362,7 @@ void main() {
     test('URI template format', () {
       final schema = createObjectSchema({'format': 'uri-template'});
 
-      final errors = schema.validateWithErrors(
-          {'someKey': 'http://example.com/dictionary/{term:1}/{term'});
+      final errors = schema.validateWithErrors({'someKey': 'http://example.com/dictionary/{term:1}/{term'});
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey');
@@ -509,8 +502,7 @@ void main() {
 
       expect(errors.length, 1);
       expect(errors[0].instancePath, '/someKey/foooooooo');
-      expect(
-          errors[0].schemaPath, '/properties/someKey/patternProperties/f.*o');
+      expect(errors[0].schemaPath, '/properties/someKey/patternProperties/f.*o');
       expect(errors[0].message, contains('type'));
     });
 
@@ -597,18 +589,15 @@ void main() {
       });
 
       test('with an instance path should include the path', () {
-        final errors = schema.validateWithErrors(
-            {'foo': 'some string', 'bar': 'oops this should be an integer'});
+        final errors = schema.validateWithErrors({'foo': 'some string', 'bar': 'oops this should be an integer'});
         expect(errors.length, 1);
         expect(errors[0].toString().startsWith('/bar:'), isTrue);
       });
 
-      test('without an instance path should add "root" instead of the path',
-          () {
+      test('without an instance path should add "root" instead of the path', () {
         final errors = schema.validateWithErrors({});
         expect(errors.length, 1);
-        expect(errors[0].toString(),
-            '# (root): required prop missing: foo from {}');
+        expect(errors[0].toString(), '# (root): required prop missing: foo from {}');
       });
     });
 
@@ -635,8 +624,7 @@ void main() {
         return JsonSchema.createSchema(refs[ref]);
       };
 
-      final schema =
-          JsonSchema.createSchema(schemaJson, refProvider: syncRefProvider);
+      final schema = JsonSchema.createSchema(schemaJson, refProvider: syncRefProvider);
 
       test('local', () {
         final errors = schema.validateWithErrors({'minLength': 'foo'});

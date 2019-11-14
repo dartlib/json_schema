@@ -78,8 +78,7 @@ class SchemaVersion implements Comparable<SchemaVersion> {
 
   static const SchemaVersion draft6 = SchemaVersion._(1);
 
-  static List<SchemaVersion> get values =>
-      const <SchemaVersion>[draft4, draft6];
+  static List<SchemaVersion> get values => const <SchemaVersion>[draft4, draft6];
 
   final int value;
 

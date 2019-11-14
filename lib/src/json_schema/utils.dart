@@ -65,8 +65,7 @@ class JsonSchemaUtils {
     return result;
   }
 
-  static String normalizePath(String path) =>
-      path.replaceAll('~', '~0').replaceAll('/', '~1').replaceAll('%', '%25');
+  static String normalizePath(String path) => path.replaceAll('~', '~0').replaceAll('/', '~1').replaceAll('%', '%25');
 
   static JsonSchema getSubMapFromFragment(JsonSchema schema, Uri uri) {
     if (uri.fragment?.isNotEmpty == true) {
@@ -77,8 +76,7 @@ class JsonSchemaUtils {
 
   static Uri getBaseFromFullUri(Uri uri) {
     List<String> segments = [];
-    if (uri.pathSegments
-        .isNotEmpty /* && uri.pathSegments.last.endsWith('.json')*/) {
+    if (uri.pathSegments.isNotEmpty /* && uri.pathSegments.last.endsWith('.json')*/) {
       segments = []..addAll(uri.pathSegments);
       segments.removeLast();
 
@@ -89,8 +87,7 @@ class JsonSchemaUtils {
 }
 
 class DefaultValidators {
-  emailValidator(String email) =>
-      JsonSchemaValidationRegexes.email.firstMatch(email) != null;
+  emailValidator(String email) => JsonSchemaValidationRegexes.email.firstMatch(email) != null;
 
   uriValidator(String uri) {
     try {

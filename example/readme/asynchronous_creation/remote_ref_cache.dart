@@ -60,8 +60,7 @@ main() async {
     r"$id": "https://example.com/geographical-location.schema.json",
     r"$schema": "http://json-schema.org/draft-06/schema#",
     "title": "Longitude and Latitude",
-    "description":
-        "A geographical coordinate on a planet (most commonly Earth).",
+    "description": "A geographical coordinate on a planet (most commonly Earth).",
     "required": ["latitude", "longitude"],
     "type": "object",
     "properties": {
@@ -73,8 +72,7 @@ main() async {
 
   final RefProviderAsync refProvider = (String ref) async {
     final Map references = {
-      'https://example.com/geographical-location.schema.json':
-          JsonSchema.createSchema(referencedSchema),
+      'https://example.com/geographical-location.schema.json': JsonSchema.createSchema(referencedSchema),
     };
 
     if (references.containsKey(ref)) {
@@ -120,8 +118,7 @@ main() async {
     }
   ];
 
-  print(
-      '${json.encode(workivaLocations)} => ${schema.validate(workivaLocations)}');
+  print('${json.encode(workivaLocations)} => ${schema.validate(workivaLocations)}');
   print('${json.encode(badLocations)} => ${schema.validate(badLocations)}');
 
   exit(0);
