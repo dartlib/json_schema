@@ -2,7 +2,7 @@ language: dart
 dart:
   - 1.24.3
   - stable
-sudo: required
+root: required
 addons:
   chrome: stable
 cache:
