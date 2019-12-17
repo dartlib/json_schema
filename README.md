@@ -3,7 +3,6 @@
   A *platform agnostic* (dart:html or dart:io) Dart library for validating JSON instances against JSON Schemas (multi-version support with latest of Draft 6).
 
 ![Build Status](https://travis-ci.org/workiva/json_schema.svg)
-[![DepShield Badge](https://depshield.sonatype.org/badges/legytma/json_schema/depshield.svg)](https://depshield.github.io)
 
 ## How To Create and Validate Against a Schema
   
