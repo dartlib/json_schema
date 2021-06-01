@@ -78,7 +78,8 @@ class SchemaVersion implements Comparable<SchemaVersion> {
 
   static const SchemaVersion draft6 = SchemaVersion._(1);
 
-  static List<SchemaVersion> get values => const <SchemaVersion>[draft4, draft6];
+  static List<SchemaVersion> get values =>
+      const <SchemaVersion>[draft4, draft6];
 
   final int value;
 
@@ -98,10 +99,11 @@ class SchemaVersion implements Comparable<SchemaVersion> {
       case draft6:
         return 'http://json-schema.org/draft-06/schema#';
     }
-    return null;
+
+    throw Exception('Unsupported schema version');
   }
 
-  static SchemaVersion fromString(String s) {
+  static SchemaVersion? fromString(String? s) {
     if (s == null) return null;
     switch (s) {
       case 'http://json-schema.org/draft-04/schema#':
@@ -114,7 +116,7 @@ class SchemaVersion implements Comparable<SchemaVersion> {
   }
 }
 
-String getJsonSchemaDefinitionByRef(String ref) {
+String? getJsonSchemaDefinitionByRef(String ref) {
   final mapping = {
     SchemaVersion.draft4.toString(): JsonSchemaDefinitions.draft4,
     SchemaVersion.draft6.toString(): JsonSchemaDefinitions.draft6,

@@ -1,7 +1,7 @@
 import 'package:json_schema/src/json_schema/constants.dart';
 import 'package:json_schema/src/json_schema/format_exceptions.dart';
-import 'package:json_schema/src/json_schema/utils.dart';
 import 'package:json_schema/src/json_schema/schema_type.dart';
+import 'package:json_schema/src/json_schema/utils.dart';
 
 class TypeValidators {
   static List list(String key, dynamic value) {
@@ -21,7 +21,8 @@ class TypeValidators {
     enumValues.forEach((v) {
       for (int j = i + 1; j < value.length; j++) {
         if (JsonSchemaUtils.jsonEqual(value[i], value[j]))
-          throw FormatExceptions.error('enum values must be unique: $value [$i]==[$j]');
+          throw FormatExceptions.error(
+              'enum values must be unique: $value [$i]==[$j]');
       }
       i++;
     });
@@ -41,20 +42,35 @@ class TypeValidators {
   }
 
   static List<SchemaType> typeList(String key, dynamic value) {
-    var typeList;
+    final typeList = <SchemaType>[];
     if (value is String) {
-      typeList = [SchemaType.fromString(value)];
+      final type = SchemaType.fromString(value);
+
+      if (type == null) {
+        throw FormatExceptions.error('$key(s) invalid $value');
+      }
+
+      typeList.add(type);
     } else if (value is List) {
-      typeList = value.map((v) => SchemaType.fromString(v)).toList();
+      for (var v in value) {
+        final type = SchemaType.fromString(v);
+
+        if (type == null) {
+          throw FormatExceptions.error('$key(s) invalid $value');
+        }
+
+        typeList.add(type);
+      }
     } else {
-      throw FormatExceptions.error('$key must be string or array: ${value.runtimeType}');
+      throw FormatExceptions.error(
+          '$key must be string or array: ${value.runtimeType}');
     }
-    if (!typeList.contains(null)) return typeList;
-    throw FormatExceptions.error('$key(s) invalid $value');
+    return typeList;
   }
 
   static dynamic nonNegative(String key, dynamic value) {
-    if (value < 0) throw FormatExceptions.error('$key must be non-negative: $value');
+    if (value < 0)
+      throw FormatExceptions.error('$key must be non-negative: $value');
     return value;
   }
 

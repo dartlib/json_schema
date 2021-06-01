@@ -41,20 +41,20 @@ library json_schema.test_invalid_schemas;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:json_schema/json_schema.dart';
+import 'package:json_schema/vm.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
-import 'package:json_schema/json_schema.dart';
-import 'package:json_schema/vm.dart';
-
 final Logger _logger = Logger('test_invalid_schemas');
 
-void main([List<String> args]) {
+void main([List<String>? args]) {
   configureJsonSchemaForVm();
 
   if (args?.isEmpty == true) {
-    Logger.root.onRecord.listen((LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
+    Logger.root.onRecord.listen(
+        (LogRecord r) => print('${r.loggerName} [${r.level}]:\t${r.message}'));
     Logger.root.level = Level.OFF;
   }
 
@@ -73,13 +73,15 @@ void main([List<String> args]) {
             final catchException = expectAsync1((e) {
               _logger.info('Caught expected $e');
               if (!(e is FormatException)) {
-                _logger.info('${shortName} threw an unexpected error type of ${e.runtimeType}');
+                _logger.info(
+                    '${shortName} threw an unexpected error type of ${e.runtimeType}');
               }
               expect(e is FormatException, true);
             });
 
             try {
-              await JsonSchema.createSchemaAsync(schemaData, schemaVersion: SchemaVersion.draft4);
+              await JsonSchema.createSchemaAsync(schemaData,
+                  schemaVersion: SchemaVersion.draft4);
               fail('Schema is expected to be invalid, but was not.');
             } catch (e) {
               catchException(e);

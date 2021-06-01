@@ -43,17 +43,18 @@ import 'package:json_schema/json_schema.dart';
 
 /// Represents one node in the schema diagram
 ///
-@Deprecated('This functionality is not maintained, is untested, and may be removed in a future release.')
+@Deprecated(
+    'This functionality is not maintained, is untested, and may be removed in a future release.')
 class SchemaNode {
+  SchemaNode(this.schema, [links]) {
+    this.links = links ?? [];
+  }
+
   /// Referenced schema this node portrays
   JsonSchema schema;
 
   /// List of links (resulting in graph edge) from this node to another
-  List<String> links;
-
-  SchemaNode(this.schema, [this.links]) {
-    if (links == null) links = [];
-  }
+  late List<String> links;
 
   static bool schemaShown(JsonSchema schema) =>
       schema.properties.length > 0 ||
@@ -86,16 +87,19 @@ class SchemaNode {
     final typeList = schema.typeList;
     if (typeList == null) {
       if (schema.oneOf.length > 0) {
-        result = 'oneOf:${schema.oneOf.map((schema) => schemaType(schema)).toList()}';
+        result =
+            'oneOf:${schema.oneOf.map((schema) => schemaType(schema)).toList()}';
       } else if (schema.anyOf.length > 0) {
-        result = 'anyOf:${schema.anyOf.map((schema) => schemaType(schema)).toList()}';
+        result =
+            'anyOf:${schema.anyOf.map((schema) => schemaType(schema)).toList()}';
       } else if (schema.allOf.length > 0) {
-        result = 'allOf:${schema.allOf.map((schema) => schemaType(schema)).toList()}';
+        result =
+            'allOf:${schema.allOf.map((schema) => schemaType(schema)).toList()}';
       } else if (schema.defaultValue != null) {
         result = 'default=${schema.defaultValue}';
       } else if (schema.ref != null) {
         result = 'ref=${schema.ref}';
-      } else if (schema.enumValues != null && schema.enumValues.length > 0) {
+      } else if (schema.enumValues != null && schema.enumValues!.length > 0) {
         result = 'enum=${schema.enumValues}';
       } else if (schema.schemaMap.length == 0) {
         result = '{}';
@@ -166,9 +170,9 @@ class SchemaNode {
 
   List<String> get enumEntries {
     final List<String> enumValues = [];
-    if (schema.enumValues.length > 0) {
+    if (schema.enumValues != null && schema.enumValues!.length > 0) {
       enumValues.add(wrap('Enum Values', color: 'beige'));
-      schema.enumValues.forEach((value) {
+      schema.enumValues!.forEach((value) {
         enumValues.add(wrap('$value', color: 'grey'));
       });
     }
@@ -183,7 +187,8 @@ class SchemaNode {
       schema.anyOf.forEach((anyOfSchema) {
         final String port = '${i++}';
         makeSchemaLink(port, schema, anyOfSchema);
-        anyOf.add(wrap(abbreviatedString('${schemaType(anyOfSchema)}', 30), color: 'grey', port: port));
+        anyOf.add(wrap(abbreviatedString('${schemaType(anyOfSchema)}', 30),
+            color: 'grey', port: port));
       });
     }
     return anyOf;
@@ -197,7 +202,8 @@ class SchemaNode {
       schema.oneOf.forEach((oneOfSchema) {
         final String port = '${i++}';
         makeSchemaLink(port, schema, oneOfSchema);
-        oneOf.add(wrap(abbreviatedString('${schemaType(oneOfSchema)}', 30), color: 'grey', port: port));
+        oneOf.add(wrap(abbreviatedString('${schemaType(oneOfSchema)}', 30),
+            color: 'grey', port: port));
       });
     }
     return oneOf;
@@ -211,7 +217,8 @@ class SchemaNode {
       schema.allOf.forEach((allOfSchema) {
         final String port = '${i++}';
         makeSchemaLink(port, schema, allOfSchema);
-        allOf.add(wrap(abbreviatedString('${schemaType(allOfSchema)}', 30), color: 'grey', port: port));
+        allOf.add(wrap(abbreviatedString('${schemaType(allOfSchema)}', 30),
+            color: 'grey', port: port));
       });
     }
     return allOf;
@@ -219,9 +226,10 @@ class SchemaNode {
 
   List<String> get propertyDependencies {
     final List<String> result = [];
-    if (schema.propertyDependencies.length > 0) {
+    if (schema.propertyDependencies != null &&
+        schema.propertyDependencies!.length > 0) {
       result.add(wrap('Property Dependencies'));
-      schema.propertyDependencies.forEach((key, val) {
+      schema.propertyDependencies!.forEach((key, val) {
         result.add(wrapRowDistinct(key, val.toString()));
       });
     }
@@ -230,9 +238,10 @@ class SchemaNode {
 
   List<String> get schemaDependencies {
     final List<String> result = [];
-    if (schema.schemaDependencies.length > 0) {
+    if (schema.schemaDependencies != null &&
+        schema.schemaDependencies!.length > 0) {
       result.add('Property Dependencies');
-      schema.propertyDependencies.forEach((key, val) {
+      schema.propertyDependencies!.forEach((key, val) {
         result.add(wrapRowDistinct(key, val.toString()));
       });
     }
@@ -242,17 +251,20 @@ class SchemaNode {
   makeSchemaPort(String port, JsonSchema schema) => '"${schema.path}":"$port"';
 
   makeSchemaLink(String port, JsonSchema src, JsonSchema target) {
-    if (schemaShown(target)) links.add('${makeSchemaPort(port, src)} -> ${makeSchemaPort("@path", target)}');
+    if (schemaShown(target))
+      links.add(
+          '${makeSchemaPort(port, src)} -> ${makeSchemaPort("@path", target)}');
   }
 
   List<String> get additionalPropertiesSchema {
     final List<String> result = [];
-    final JsonSchema other = schema.additionalPropertiesSchema;
+    final JsonSchema? other = schema.additionalPropertiesSchema;
     if (other != null) {
       result.add(wrap('Additional Properties', color: 'lemonchiffon'));
       final String port = 'mustBe';
       makeSchemaLink(port, schema, other);
-      result.add(wrapRowDistinct('Must Be: ', abbreviatedString(schemaType(other).toString(), 30), port));
+      result.add(wrapRowDistinct('Must Be: ',
+          abbreviatedString(schemaType(other).toString(), 30) ?? '', port));
     }
     return result;
   }
@@ -263,16 +275,20 @@ class SchemaNode {
       props.add(wrap('Properties'));
       final sortedProps = List.from(schema.properties.keys)..sort();
       sortedProps.forEach((prop) {
-        final propertySchema = schema.properties[prop];
-        final String requiredPrefix = schema.propertyRequired(prop) ? '! ' : '? ';
+        final propertySchema = schema.properties[prop]!;
+        final String requiredPrefix =
+            schema.propertyRequired(prop) ? '! ' : '? ';
         final String port = '@$prop';
         if (schemaShown(propertySchema)) {
           makeSchemaLink(port, schema, propertySchema);
-        } else if (propertySchema.items is JsonSchema && schemaShown(propertySchema.items)) {
-          makeSchemaLink(port, schema, propertySchema.items);
+        } else if (propertySchema.items is JsonSchema &&
+            schemaShown(propertySchema.items!)) {
+          makeSchemaLink(port, schema, propertySchema.items!);
         }
         props.add(wrapRowDistinct(
-            '$requiredPrefix$prop', abbreviatedString(schemaType(propertySchema).toString(), 30), port));
+            '$requiredPrefix$prop',
+            abbreviatedString(schemaType(propertySchema).toString(), 30) ?? '',
+            port));
       });
     }
     return props;
@@ -281,8 +297,8 @@ class SchemaNode {
   List<String> get definitionEntries {
     final List<String> definitions = [];
     if (schema.definitions.length > 0) {
-      definitions
-          .add('<tr><td bgcolor="wheat" align="center" colspan="2"><font color="black">Definitions</font></td></tr>');
+      definitions.add(
+          '<tr><td bgcolor="wheat" align="center" colspan="2"><font color="black">Definitions</font></td></tr>');
       final sortedDefinitions = List.from(schema.definitions.keys)..sort();
       sortedDefinitions.forEach((key) {
         definitions.add(wrapRowDistinct(key, '', '${schema.path}@$key'));
@@ -291,18 +307,23 @@ class SchemaNode {
     return definitions;
   }
 
-  String wrap(String s, {String port = '', String color = 'wheat'}) => s == null
+  String wrap(String? s, {String port = '', String color = 'wheat'}) => s ==
+          null
       ? ''
       : '<tr><td bgcolor="$color" align="center" colspan="2" port="$port"><font color="black">$s</font></td></tr>';
 
   String wrapRowDistinct(String first, String second, [String port = '']) =>
       '<tr><td align="left" port="$port">$first</td>$first<td bgcolor="grey" align="right">$second</td></tr>';
 
-  String get title => schema.title != null ? abbreviatedString("title=${schema.title}", 30) : null;
+  String? get title => schema.title != null
+      ? abbreviatedString("title=${schema.title}", 30)
+      : null;
 
-  String get description => schema.description != null ? abbreviatedString('descr=${schema.description}', 30) : null;
+  String? get description => schema.description != null
+      ? abbreviatedString('descr=${schema.description}', 30)
+      : null;
 
-  String abbreviatedString(String s, [int len = 15]) {
+  String? abbreviatedString(String? s, [int len = 15]) {
     if (s == null) return s;
     len -= 3;
     if (len >= s.length) {
@@ -314,7 +335,8 @@ class SchemaNode {
 }
 
 /// Return a dot specification for [schema]
-@Deprecated('This functionality is not maintained, is untested, and may be removed in a future release.')
+@Deprecated(
+    'This functionality is not maintained, is untested, and may be removed in a future release.')
 String createDot(JsonSchema schema) => '''
 digraph G {
   fontname = "Bitstream Vera Sans"

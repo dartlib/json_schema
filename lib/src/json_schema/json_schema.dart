@@ -40,47 +40,51 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
-import 'package:path/path.dart' as path_lib;
-
 import 'package:json_schema/src/json_schema/constants.dart';
 import 'package:json_schema/src/json_schema/format_exceptions.dart';
 import 'package:json_schema/src/json_schema/global_platform_functions.dart';
 import 'package:json_schema/src/json_schema/schema_type.dart';
 import 'package:json_schema/src/json_schema/type_validators.dart';
+import 'package:json_schema/src/json_schema/typedefs.dart';
 import 'package:json_schema/src/json_schema/utils.dart';
 import 'package:json_schema/src/json_schema/validator.dart';
-import 'package:json_schema/src/json_schema/typedefs.dart';
+import 'package:path/path.dart' as path_lib;
 
 typedef dynamic SchemaPropertySetter(JsonSchema s, dynamic value);
 typedef SchemaAssigner(JsonSchema s);
 typedef SchemaAdder(JsonSchema s);
 typedef Future<JsonSchema> AsyncRetrievalOperation();
-typedef JsonSchema SyncRetrievalOperation();
+typedef JsonSchema? SyncRetrievalOperation();
 
 class RetrievalRequest {
-  Uri schemaUri;
-  AsyncRetrievalOperation asyncRetrievalOperation;
-  SyncRetrievalOperation syncRetrievalOperation;
+  Uri? schemaUri;
+  AsyncRetrievalOperation? asyncRetrievalOperation;
+  SyncRetrievalOperation? syncRetrievalOperation;
 }
 
 /// Constructed with a json schema, either as string or Map. Validation of
 /// the schema itself is done on construction. Any errors in the schema
 /// result in a FormatException being thrown.
 class JsonSchema {
-  JsonSchema._fromMap(this._root, this._schemaMap, this._path, {JsonSchema parent}) {
+  JsonSchema._fromMap(this._root, this._schemaMap, this._path,
+      {JsonSchema? parent}) {
     this._parent = parent;
     _initialize();
     _addSchemaToRefMap(path, this);
   }
 
-  JsonSchema._fromBool(this._root, this._schemaBool, this._path, {JsonSchema parent}) {
+  JsonSchema._fromBool(this._root, this._schemaBool, this._path,
+      {JsonSchema? parent}) {
     this._parent = parent;
     _initialize();
     _addSchemaToRefMap(path, this);
   }
 
   JsonSchema._fromRootMap(this._schemaMap, SchemaVersion schemaVersion,
-      {Uri fetchedFromUri, bool isSync = false, RefProvider refProvider, RefProviderAsync refProviderAsync}) {
+      {Uri? fetchedFromUri,
+      bool isSync = false,
+      RefProvider? refProvider,
+      RefProviderAsync? refProviderAsync}) {
     _initialize(
         schemaVersion: schemaVersion,
         fetchedFromUri: fetchedFromUri,
@@ -90,7 +94,10 @@ class JsonSchema {
   }
 
   JsonSchema._fromRootBool(this._schemaBool, SchemaVersion schemaVersion,
-      {Uri fetchedFromUri, bool isSync = false, RefProvider refProvider, RefProviderAsync refProviderAsync}) {
+      {Uri? fetchedFromUri,
+      bool isSync = false,
+      RefProvider? refProvider,
+      RefProviderAsync? refProviderAsync}) {
     _initialize(
         schemaVersion: schemaVersion,
         fetchedFromUri: fetchedFromUri,
@@ -110,7 +117,9 @@ class JsonSchema {
   /// The [schema] can either be a decoded JSON object (Only [Map] or [bool] per the spec),
   /// or alternatively, a [String] may be passed in and JSON decoding will be handled automatically.
   static Future<JsonSchema> createSchemaAsync(dynamic schema,
-      {SchemaVersion schemaVersion, Uri fetchedFromUri, RefProviderAsync refProvider}) {
+      {SchemaVersion? schemaVersion,
+      Uri? fetchedFromUri,
+      RefProviderAsync? refProvider}) {
     // Default to assuming the schema is already a decoded, primitive dart object.
     dynamic data = schema;
 
@@ -120,7 +129,8 @@ class JsonSchema {
       try {
         data = json.decode(schema);
       } catch (e) {
-        throw ArgumentError('String data provided to createSchemaAsync is not valid JSON.');
+        throw ArgumentError(
+            'String data provided to createSchemaAsync is not valid JSON.');
       }
     }
 
@@ -128,13 +138,14 @@ class JsonSchema {
     final version = _getSchemaVersion(schemaVersion, data);
 
     if (data is Map) {
-      return JsonSchema._fromRootMap(data, schemaVersion, fetchedFromUri: fetchedFromUri, refProviderAsync: refProvider)
+      return JsonSchema._fromRootMap(data as Map<String, dynamic>, version,
+              fetchedFromUri: fetchedFromUri, refProviderAsync: refProvider)
           ._thisCompleter
           .future;
 
       // Boolean schemas are only supported in draft 6 and later.
     } else if (data is bool && version == SchemaVersion.draft6) {
-      return JsonSchema._fromRootBool(data, schemaVersion,
+      return JsonSchema._fromRootBool(data, version,
               fetchedFromUri: fetchedFromUri, refProviderAsync: refProvider)
           ._thisCompleter
           .future;
@@ -151,7 +162,9 @@ class JsonSchema {
   /// The [schema] can either be a decoded JSON object (Only [Map] or [bool] per the spec),
   /// or alternatively, a [String] may be passed in and JSON decoding will be handled automatically.
   static JsonSchema createSchema(dynamic schema,
-      {SchemaVersion schemaVersion, Uri fetchedFromUri, RefProvider refProvider}) {
+      {SchemaVersion? schemaVersion,
+      Uri? fetchedFromUri,
+      RefProvider? refProvider}) {
     // Default to assuming the schema is already a decoded, primitive dart object.
     dynamic data = schema;
 
@@ -161,7 +174,8 @@ class JsonSchema {
       try {
         data = json.decode(schema);
       } catch (e) {
-        throw ArgumentError('String data provided to createSchema is not valid JSON.');
+        throw ArgumentError(
+            'String data provided to createSchema is not valid JSON.');
       }
     }
 
@@ -169,14 +183,18 @@ class JsonSchema {
     final version = _getSchemaVersion(schemaVersion, data);
 
     if (data is Map) {
-      return JsonSchema._fromRootMap(data, schemaVersion,
-              fetchedFromUri: fetchedFromUri, isSync: true, refProvider: refProvider)
+      return JsonSchema._fromRootMap(data as Map<String, dynamic>, version,
+              fetchedFromUri: fetchedFromUri,
+              isSync: true,
+              refProvider: refProvider)
           .resolvePath('#');
 
       // Boolean schemas are only supported in draft 6 and later.
     } else if (data is bool && version == SchemaVersion.draft6) {
-      return JsonSchema._fromRootBool(data, schemaVersion,
-              fetchedFromUri: fetchedFromUri, isSync: true, refProvider: refProvider)
+      return JsonSchema._fromRootBool(data, version,
+              fetchedFromUri: fetchedFromUri,
+              isSync: true,
+              refProvider: refProvider)
           .resolvePath('#');
     }
     throw ArgumentError(
@@ -187,20 +205,22 @@ class JsonSchema {
   ///
   /// This method is asyncronous to support automatic fetching of sub-[JsonSchema]s for items,
   /// properties, and sub-properties of the root schema.
-  static Future<JsonSchema> createSchemaFromUrl(String schemaUrl, {SchemaVersion schemaVersion}) {
+  static Future<JsonSchema> createSchemaFromUrl(String schemaUrl,
+      {SchemaVersion? schemaVersion}) {
     if (globalCreateJsonSchemaFromUrl == null) {
       throw StateError('no globalCreateJsonSchemaFromUrl defined!');
     }
-    return globalCreateJsonSchemaFromUrl(schemaUrl, schemaVersion: schemaVersion);
+    return globalCreateJsonSchemaFromUrl!(schemaUrl,
+        schemaVersion: schemaVersion);
   }
 
   /// Construct and validate a JsonSchema.
   _initialize(
-      {SchemaVersion schemaVersion,
-      Uri fetchedFromUri,
+      {SchemaVersion? schemaVersion,
+      Uri? fetchedFromUri,
       bool isSync = false,
-      RefProvider refProvider,
-      RefProviderAsync refProviderAsync}) {
+      RefProvider? refProvider,
+      RefProviderAsync? refProviderAsync}) {
     if (_root == null) {
       /// Set the Schema version before doing anything else, since almost everything depends on it.
       final version = _getSchemaVersion(schemaVersion, this._schemaMap);
@@ -212,7 +232,8 @@ class JsonSchema {
       _schemaVersion = version;
       _fetchedFromUri = fetchedFromUri;
       try {
-        _fetchedFromUriBase = JsonSchemaUtils.getBaseFromFullUri(_fetchedFromUri);
+        _fetchedFromUriBase =
+            JsonSchemaUtils.getBaseFromFullUri(_fetchedFromUri!);
       } catch (e) {
         // ID base can't be set for schemes other than HTTP(S).
         // This is expected behavior.
@@ -221,18 +242,18 @@ class JsonSchema {
       _addSchemaToRefMap('#', this);
       _thisCompleter = Completer<JsonSchema>();
     } else {
-      _isSync = _root._isSync;
-      _refProvider = _root._refProvider;
-      _refProviderAsync = _root._refProviderAsync;
-      _schemaVersion = _root.schemaVersion;
-      _schemaRefs = _root._schemaRefs;
-      _refMap = _root._refMap;
-      _freeFormMap = _root._freeFormMap;
-      _thisCompleter = _root._thisCompleter;
-      _schemaAssignments = _root._schemaAssignments;
+      _isSync = _root!._isSync;
+      _refProvider = _root!._refProvider;
+      _refProviderAsync = _root!._refProviderAsync;
+      _schemaVersion = _root!.schemaVersion;
+      _schemaRefs = _root!._schemaRefs;
+      _refMap = _root!._refMap;
+      _freeFormMap = _root!._freeFormMap;
+      _thisCompleter = _root!._thisCompleter;
+      _schemaAssignments = _root!._schemaAssignments;
     }
 
-    if (_root._isSync) {
+    if (_root!._isSync) {
       _validateSchemaSync();
       if (_root == this) {
         _thisCompleter.complete(this);
@@ -248,7 +269,7 @@ class JsonSchema {
   void _validateAndSetIndividualProperties() {
     var accessMap;
     // Set the access map based on features used in the currently set version.
-    if (_root.schemaVersion == SchemaVersion.draft4) {
+    if (_root?.schemaVersion == SchemaVersion.draft4) {
       accessMap = _accessMapV4;
     } else {
       accessMap = _accessMapV6;
@@ -258,14 +279,16 @@ class JsonSchema {
     // set all properties according to spec.
     _schemaMap.forEach((k, v) {
       /// Get the _set<X> method from the [accessMap] based on the [Map] string key.
-      final SchemaPropertySetter accessor = accessMap[k];
+      final SchemaPropertySetter? accessor = accessMap[k];
       if (accessor != null) {
         accessor(this, v);
       } else {
         // Attempt to create a schema out of the property and register the ref, but don't error if it's not a valid schema.
-        _makeSchema('$_path/$k', v, (rhs) => _refMap[k] = rhs, mustBeValid: false);
+        _makeSchema('$_path/$k', v, (rhs) => _refMap[k] = rhs,
+            mustBeValid: false);
         // Add the prop to the free form map just in case.
-        _freeFormMap[path_lib.join(_path, JsonSchemaUtils.normalizePath(k))] = v;
+        _freeFormMap[path_lib.join(_path, JsonSchemaUtils.normalizePath(k))] =
+            v;
       }
     });
   }
@@ -298,16 +321,20 @@ class JsonSchema {
       // filter out requests that can be resolved locally.
       final List<RetrievalRequest> requestsToRemove = [];
       for (final retrievalRequest in _retrievalRequests) {
-        JsonSchema localSchema;
+        JsonSchema? localSchema;
         // check if the ref is actually a standard schema definition, resolve it locally.
-        if (SchemaVersion.fromString(retrievalRequest.schemaUri.toString()) != null) {
+        if (SchemaVersion.fromString(retrievalRequest.schemaUri.toString()) !=
+            null) {
           final definitionRef = retrievalRequest.schemaUri.toString();
-          localSchema = JsonSchema.createSchema(getJsonSchemaDefinitionByRef(definitionRef));
-          _addSchemaToRefMap(retrievalRequest.schemaUri.toString(), localSchema);
+          localSchema = JsonSchema.createSchema(
+              getJsonSchemaDefinitionByRef(definitionRef));
+          _addSchemaToRefMap(
+              retrievalRequest.schemaUri.toString(), localSchema);
         } else {
           // attempt to get the schema from the existing schema cache.
           try {
-            localSchema = _getSchemaFromPath(retrievalRequest.schemaUri.toString());
+            localSchema =
+                _getSchemaFromPath(retrievalRequest.schemaUri.toString());
           } catch (e) {
             // DO NOTHING: if we couldn't resolve the path locally,
             // it just means we need to make a request after all
@@ -327,7 +354,7 @@ class JsonSchema {
 
     if (_root == this) {
       if (_retrievalRequests.isNotEmpty) {
-        Future.wait(_retrievalRequests.map((r) => r.asyncRetrievalOperation()))
+        Future.wait(_retrievalRequests.map((r) => r.asyncRetrievalOperation!()))
             .then((_) => _thisCompleter.complete(_getSchemaFromPath('#')));
       } else {
         _thisCompleter.complete(_getSchemaFromPath('#'));
@@ -347,7 +374,7 @@ class JsonSchema {
         final completedRequests = [];
         _retrievalRequests.forEach((r) {
           if (r.syncRetrievalOperation != null) {
-            final schema = r.syncRetrievalOperation();
+            final schema = r.syncRetrievalOperation!();
             schema != null ? completedRequests.add(r) : null;
           }
         });
@@ -393,12 +420,14 @@ class JsonSchema {
   /// Given a path, find the ref'd [JsonSchema] from the map.
   JsonSchema _getSchemaFromPath(String original) {
     final String path = endPath(original);
-    final JsonSchema result = _refMap[path];
+    final JsonSchema? result = _refMap[path];
 
     if (result == null) {
       final schema = _freeFormMap[path];
-      if (schema is! Map) throw FormatExceptions.schema('free-form property $original at $path', schema);
-      return JsonSchema._fromMap(_root, schema, path);
+      if (schema is! Map)
+        throw FormatExceptions.schema(
+            'free-form property $original at $path', schema);
+      return JsonSchema._fromMap(_root, schema as Map<String, dynamic>, path);
     }
     return result;
   }
@@ -409,10 +438,13 @@ class JsonSchema {
     assert(!_refMap.containsKey(path));
 
     if (schemaDefinition is Map) {
-      return JsonSchema._fromMap(_root, schemaDefinition, path, parent: this);
+      return JsonSchema._fromMap(
+          _root, schemaDefinition as Map<String, dynamic>, path,
+          parent: this);
 
       // Boolean schemas are only supported in draft 6 and later.
-    } else if (schemaDefinition is bool && schemaVersion == SchemaVersion.draft6) {
+    } else if (schemaDefinition is bool &&
+        schemaVersion == SchemaVersion.draft6) {
       return JsonSchema._fromBool(_root, schemaDefinition, path, parent: this);
     }
     throw ArgumentError(
@@ -424,25 +456,25 @@ class JsonSchema {
   // --------------------------------------------------------------------------
 
   /// The root [JsonSchema] for this [JsonSchema].
-  JsonSchema _root;
+  JsonSchema? _root;
 
   /// The parent [JsonSchema] for this [JsonSchema].
-  JsonSchema _parent;
+  JsonSchema? _parent;
 
   /// JSON of the [JsonSchema] as a [Map]. Only this value or [_schemaBool] should be set, not both.
   Map<String, dynamic> _schemaMap = {};
 
   /// JSON of the [JsonSchema] as a [bool]. Only this value or [_schemaMap] should be set, not both.
-  bool _schemaBool;
+  bool? _schemaBool;
 
   /// JSON Schema version string.
-  SchemaVersion _schemaVersion;
+  SchemaVersion? _schemaVersion;
 
   /// Remote [Uri] the [JsonSchema] was fetched from, if any.
-  Uri _fetchedFromUri;
+  Uri? _fetchedFromUri;
 
   /// Base of the remote [Uri] the [JsonSchema] was fetched from, if any.
-  Uri _fetchedFromUriBase;
+  Uri? _fetchedFromUriBase;
 
   /// A [List<JsonSchema>] which the value must conform to all of.
   List<JsonSchema> _allOf = [];
@@ -463,7 +495,7 @@ class JsonSchema {
   Map<String, JsonSchema> _definitions = {};
 
   /// Description of the [JsonSchema].
-  String _description;
+  String? _description;
 
   /// Possible values of the [JsonSchema].
   List _enumValues = [];
@@ -472,86 +504,86 @@ class JsonSchema {
   List _examples = [];
 
   /// Whether the maximum of the [JsonSchema] is exclusive.
-  bool _exclusiveMaximum;
+  bool? _exclusiveMaximum;
 
   /// Whether the maximum of the [JsonSchema] is exclusive.
-  num _exclusiveMaximumV6;
+  num? _exclusiveMaximumV6;
 
   /// Whether the minumum of the [JsonSchema] is exclusive.
-  bool _exclusiveMinimum;
+  bool? _exclusiveMinimum;
 
   /// Whether the minumum of the [JsonSchema] is exclusive.
-  num _exclusiveMinimumV6;
+  num? _exclusiveMinimumV6;
 
   /// Pre-defined format (i.e. date-time, email, etc) of the [JsonSchema] value.
-  String _format;
+  String? _format;
 
   /// ID of the [JsonSchema].
-  Uri _id;
+  Uri? _id;
 
   /// Base URI of the ID. All sub-schemas are resolved against this
-  Uri _idBase;
+  Uri? _idBase;
 
   /// Maximum value of the [JsonSchema] value.
-  num _maximum;
+  num? _maximum;
 
   /// Minimum value of the [JsonSchema] value.
-  num _minimum;
+  num? _minimum;
 
   /// Maximum value of the [JsonSchema] value.
-  int _maxLength;
+  int? _maxLength;
 
   /// Minimum length of the [JsonSchema] value.
-  int _minLength;
+  int? _minLength;
 
   /// The number which the value of the [JsonSchema] must be a multiple of.
-  num _multipleOf;
+  num? _multipleOf;
 
   /// A [JsonSchema] which the value must NOT be.
-  JsonSchema _notSchema;
+  JsonSchema? _notSchema;
 
   /// A [List<JsonSchema>] which the value must conform to at least one of.
   List<JsonSchema> _oneOf = [];
 
   /// The regular expression the [JsonSchema] value must conform to.
-  RegExp _pattern;
+  RegExp? _pattern;
 
   /// Ref to the URI of the [JsonSchema].
-  Uri _ref;
+  Uri? _ref;
 
   /// The path of the [JsonSchema] within the root [JsonSchema].
-  String _path;
+  late String _path;
 
   /// Title of the [JsonSchema].
-  String _title;
+  String? _title;
 
   /// List of allowable types for the [JsonSchema].
-  List<SchemaType> _typeList;
+  List<SchemaType>? _typeList;
 
   // --------------------------------------------------------------------------
   // Schema List Item Related Fields
   // --------------------------------------------------------------------------
 
   /// [JsonSchema] definition used to validate items of this schema.
-  JsonSchema _items;
+  JsonSchema? _items;
 
   /// List of [JsonSchema] used to validate items of this schema.
-  List<JsonSchema> _itemsList;
+  List<JsonSchema>? _itemsList;
 
   /// Whether additional items are allowed.
-  bool _additionalItemsBool;
+  bool? _additionalItemsBool;
 
   /// [JsonSchema] additionalItems should conform to.
-  JsonSchema _additionalItemsSchema;
+  JsonSchema? _additionalItemsSchema;
 
   /// [JsonSchema] definition that at least one item must match to be valid.
-  JsonSchema _contains;
+  JsonSchema? _contains;
 
-  /// Maimum number of items allowed.
-  int _maxItems;
+  /// Maximum number of items allowed.
+  int? _maxItems;
 
-  /// Maimum number of items allowed.
-  int _minItems;
+  /// Maximum number of items allowed.
+  int? _minItems;
 
   /// Whether the items in the list must be unique.
   bool _uniqueItems = false;
@@ -564,23 +596,23 @@ class JsonSchema {
   Map<String, JsonSchema> _properties = {};
 
   /// [JsonSchema] that property names must conform to.
-  JsonSchema _propertyNamesSchema;
+  JsonSchema? _propertyNamesSchema;
 
   /// Whether additional properties, other than those specified, are allowed.
-  bool _additionalProperties;
+  bool? _additionalProperties;
 
   /// [JsonSchema] that additional properties must conform to.
-  JsonSchema _additionalPropertiesSchema;
+  JsonSchema? _additionalPropertiesSchema;
 
   Map<String, List<String>> _propertyDependencies = {};
 
   Map<String, JsonSchema> _schemaDependencies = {};
 
   /// The maximum number of properties allowed.
-  int _maxProperties;
+  int? _maxProperties;
 
   /// The minimum number of properties allowed.
-  int _minProperties = 0;
+  int? _minProperties = 0;
 
   /// Map of [JsonSchema]s for properties, based on [RegExp]s keys.
   Map<RegExp, JsonSchema> _patternProperties = {};
@@ -588,7 +620,7 @@ class JsonSchema {
   Map<String, JsonSchema> _refMap = {};
 
   /// List if properties that are required for the [JsonSchema] instance to be valid.
-  List<String> _requiredProperties;
+  List<String>? _requiredProperties;
 
   // --------------------------------------------------------------------------
   // Implementation Specific Feilds
@@ -597,7 +629,7 @@ class JsonSchema {
   /// Maps any unsupported top level property to its original value
   Map<String, dynamic> _freeFormMap = {};
 
-  /// Set of strings to gaurd against path cycles
+  /// Set of strings to guard against path cycles
   Set<String> _pathsEncountered = Set();
 
   /// HTTP(S) requests to fetch ref'd schemas.
@@ -622,7 +654,7 @@ class JsonSchema {
   /// If [isSync] is true and no ref provider is specified: remote refs in a schema will cause an error to be thrown.
   /// If [isSync] is false and an async ref provider is specified : the async ref provider will be used.
   /// If [isSync] is false and no ref provider is specified: the default HTTP(S) ref provider will be used.
-  RefProvider _refProvider;
+  RefProvider? _refProvider;
 
   /// Asynchronous ref provider used to resolve remote references in a given [JsonSchema].
   ///
@@ -632,7 +664,7 @@ class JsonSchema {
   /// If [isSync] is true and no ref provider is specified: remote refs in a schema will cause an error to be thrown.
   /// If [isSync] is false and an async ref provider is specified : the async ref provider will be used.
   /// If [isSync] is false and no ref provider is specified: the default HTTP(S) ref provider will be used.
-  RefProviderAsync _refProviderAsync;
+  RefProviderAsync? _refProviderAsync;
 
   /// Shared keywords across all versions of JSON Schema.
   static Map<String, SchemaPropertySetter> _baseAccessMap = {
@@ -663,46 +695,56 @@ class JsonSchema {
     'uniqueItems': (JsonSchema s, dynamic v) => s._setUniqueItems(v),
     // Schema Sub-Property Related Fields
     'properties': (JsonSchema s, dynamic v) => s._setProperties(v),
-    'additionalProperties': (JsonSchema s, dynamic v) => s._setAdditionalProperties(v),
+    'additionalProperties': (JsonSchema s, dynamic v) =>
+        s._setAdditionalProperties(v),
     'dependencies': (JsonSchema s, dynamic v) => s._setDependencies(v),
     'maxProperties': (JsonSchema s, dynamic v) => s._setMaxProperties(v),
     'minProperties': (JsonSchema s, dynamic v) => s._setMinProperties(v),
-    'patternProperties': (JsonSchema s, dynamic v) => s._setPatternProperties(v),
+    'patternProperties': (JsonSchema s, dynamic v) =>
+        s._setPatternProperties(v),
   };
 
   /// Map to allow getters to be accessed by String key.
-  static Map<String, SchemaPropertySetter> _accessMapV4 = Map<String, SchemaPropertySetter>()
-    ..addAll(_baseAccessMap)
-    ..addAll({
-      // Add properties that are changed incompatibly later.
-      'exclusiveMaximum': (JsonSchema s, dynamic v) => s._setExclusiveMaximum(v),
-      'exclusiveMinimum': (JsonSchema s, dynamic v) => s._setExclusiveMinimum(v),
-      'id': (JsonSchema s, dynamic v) => s._setId(v),
-      'required': (JsonSchema s, dynamic v) => s._setRequired(v),
-    });
+  static Map<String, SchemaPropertySetter> _accessMapV4 =
+      Map<String, SchemaPropertySetter>()
+        ..addAll(_baseAccessMap)
+        ..addAll({
+          // Add properties that are changed incompatibly later.
+          'exclusiveMaximum': (JsonSchema s, dynamic v) =>
+              s._setExclusiveMaximum(v),
+          'exclusiveMinimum': (JsonSchema s, dynamic v) =>
+              s._setExclusiveMinimum(v),
+          'id': (JsonSchema s, dynamic v) => s._setId(v),
+          'required': (JsonSchema s, dynamic v) => s._setRequired(v),
+        });
 
-  static Map<String, SchemaPropertySetter> _accessMapV6 = Map<String, SchemaPropertySetter>()
-    ..addAll(_baseAccessMap)
-    ..addAll({
-      // Note: see http://json-schema.org/draft-06/json-schema-release-notes.html
+  static Map<String, SchemaPropertySetter> _accessMapV6 =
+      Map<String, SchemaPropertySetter>()
+        ..addAll(_baseAccessMap)
+        ..addAll({
+          // Note: see http://json-schema.org/draft-06/json-schema-release-notes.html
 
-      // Added in draft6
-      'const': (JsonSchema s, dynamic v) => s._setConst(v),
-      'contains': (JsonSchema s, dynamic v) => s._setContains(v),
-      'examples': (JsonSchema s, dynamic v) => s._setExamples(v),
-      'propertyNames': (JsonSchema s, dynamic v) => s._setPropertyNames(v),
-      // changed (imcompatible) in draft6
-      'exclusiveMaximum': (JsonSchema s, dynamic v) => s._setExclusiveMaximumV6(v),
-      'exclusiveMinimum': (JsonSchema s, dynamic v) => s._setExclusiveMinimumV6(v),
-      '\$id': (JsonSchema s, dynamic v) => s._setId(v),
-      'required': (JsonSchema s, dynamic v) => s._setRequiredV6(v),
-    });
+          // Added in draft6
+          'const': (JsonSchema s, dynamic v) => s._setConst(v),
+          'contains': (JsonSchema s, dynamic v) => s._setContains(v),
+          'examples': (JsonSchema s, dynamic v) => s._setExamples(v),
+          'propertyNames': (JsonSchema s, dynamic v) => s._setPropertyNames(v),
+          // changed (imcompatible) in draft6
+          'exclusiveMaximum': (JsonSchema s, dynamic v) =>
+              s._setExclusiveMaximumV6(v),
+          'exclusiveMinimum': (JsonSchema s, dynamic v) =>
+              s._setExclusiveMinimumV6(v),
+          '\$id': (JsonSchema s, dynamic v) => s._setId(v),
+          'required': (JsonSchema s, dynamic v) => s._setRequiredV6(v),
+        });
 
   /// Get a nested [JsonSchema] from a path.
   JsonSchema resolvePath(String path) => _getSchemaFromPath(path);
 
   @override
-  bool operator ==(dynamic other) => other is JsonSchema && DeepCollectionEquality().equals(schemaMap, other.schemaMap);
+  bool operator ==(dynamic other) =>
+      other is JsonSchema &&
+      DeepCollectionEquality().equals(schemaMap, other.schemaMap);
 
   @override
   int get hashCode => DeepCollectionEquality().hash(schemaMap);
@@ -715,10 +757,10 @@ class JsonSchema {
   // --------------------------------------------------------------------------
 
   /// The root [JsonSchema] for this [JsonSchema].
-  JsonSchema get root => _root;
+  JsonSchema get root => _root!;
 
   /// The parent [JsonSchema] for this [JsonSchema].
-  JsonSchema get parent => _parent;
+  JsonSchema? get parent => _parent;
 
   /// Get the anchestry of the current schema, up to the root [JsonSchema].
   List<JsonSchema> get _parents {
@@ -740,22 +782,23 @@ class JsonSchema {
   Map get schemaMap => _schemaMap;
 
   /// JSON of the [JsonSchema] as a [bool]. Only this value or [_schemaMap] should be set, not both.
-  bool get schemaBool => _schemaBool;
+  bool? get schemaBool => _schemaBool;
 
-  /// JSON string represenatation of the schema.
+  /// JSON string representation of the schema.
   String toJson() => json.encode(_schemaMap ?? _schemaBool);
 
   /// JSON Schema version used.
   ///
-  /// Note: Only one version can be used for a nested [JsonScehema] object.
+  /// Note: Only one version can be used for a nested [JsonSchema] object.
   /// Default: [SchemaVersion.draft6]
-  SchemaVersion get schemaVersion => _root._schemaVersion ?? SchemaVersion.draft6;
+  SchemaVersion get schemaVersion =>
+      _root?._schemaVersion ?? SchemaVersion.draft6;
 
   /// Base [Uri] of the [JsonSchema] based on $id, or where it was fetched from, in that order, if any.
-  Uri get _uriBase => _idBase ?? _fetchedFromUriBase;
+  Uri? get _uriBase => _idBase ?? _fetchedFromUriBase;
 
   /// [Uri] from the first ancestor with an ID
-  Uri get _inheritedUriBase {
+  Uri? get _inheritedUriBase {
     for (final parent in _parents) {
       if (parent._uriBase != null) {
         return parent._uriBase;
@@ -766,10 +809,10 @@ class JsonSchema {
   }
 
   /// [Uri] of the [JsonSchema] based on $id, or where it was fetched from, in that order, if any.
-  Uri get _uri => ((_id ?? _fetchedFromUri)?.removeFragment());
+  Uri? get _uri => ((_id ?? _fetchedFromUri)?.removeFragment());
 
   /// [Uri] from the first ancestor with an ID
-  Uri get _inheritedUri {
+  Uri? get _inheritedUri {
     for (final parent in _parents) {
       if (parent._uri != null) {
         return parent._uri;
@@ -802,7 +845,7 @@ class JsonSchema {
   /// Description of the [JsonSchema].
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-7.2
-  String get description => _description;
+  String? get description => _description;
 
   /// Possible values of the [JsonSchema].
   ///
@@ -810,7 +853,7 @@ class JsonSchema {
   List get enumValues => _enumValues;
 
   /// The value of the exclusiveMaximum for the [JsonSchema], if any exists.
-  num get exclusiveMaximum {
+  num? get exclusiveMaximum {
     // If we're on draft6, the property contains the value, return it.
     if (schemaVersion == SchemaVersion.draft6) {
       return _exclusiveMaximumV6;
@@ -825,10 +868,11 @@ class JsonSchema {
   }
 
   /// Whether the maximum of the [JsonSchema] is exclusive.
-  bool get hasExclusiveMaximum => _exclusiveMaximum ?? _exclusiveMaximumV6 != null;
+  bool get hasExclusiveMaximum =>
+      _exclusiveMaximum ?? _exclusiveMaximumV6 != null;
 
   /// The value of the exclusiveMaximum for the [JsonSchema], if any exists.
-  num get exclusiveMinimum {
+  num? get exclusiveMinimum {
     // If we're on draft6, the property contains the value, return it.
     if (schemaVersion == SchemaVersion.draft6) {
       return _exclusiveMinimumV6;
@@ -843,16 +887,17 @@ class JsonSchema {
   }
 
   /// Whether the minimum of the [JsonSchema] is exclusive.
-  bool get hasExclusiveMinimum => _exclusiveMinimum ?? _exclusiveMinimumV6 != null;
+  bool get hasExclusiveMinimum =>
+      _exclusiveMinimum ?? _exclusiveMinimumV6 != null;
 
   /// Pre-defined format (i.e. date-time, email, etc) of the [JsonSchema] value.
-  String get format => _format;
+  String? get format => _format;
 
   /// ID of the [JsonSchema].
-  Uri get id => _id;
+  Uri? get id => _id;
 
   /// ID from the first ancestor with an ID
-  Uri get _inheritedId {
+  Uri? get _inheritedId {
     for (final parent in _parents) {
       if (parent.id != null) {
         return parent.id;
@@ -865,35 +910,35 @@ class JsonSchema {
   /// Maximum value of the [JsonSchema] value.
   ///
   /// Reference: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.2
-  num get maximum => _maximum;
+  num? get maximum => _maximum;
 
   /// Minimum value of the [JsonSchema] value.
   ///
   /// Reference: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.4
-  num get minimum => _minimum;
+  num? get minimum => _minimum;
 
   /// Maximum length of the [JsonSchema] value.
   ///
   /// Reference: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.6
-  int get maxLength => _maxLength;
+  int? get maxLength => _maxLength;
 
   /// Minimum length of the [JsonSchema] value.
   ///
   /// Reference: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.7
-  int get minLength => _minLength;
+  int? get minLength => _minLength;
 
   /// The number which the value of the [JsonSchema] must be a multiple of.
   ///
   /// Reference: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.1
-  num get multipleOf => _multipleOf;
+  num? get multipleOf => _multipleOf;
 
   /// The path of the [JsonSchema] within the root [JsonSchema].
   String get path => _path;
 
   /// The regular expression the [JsonSchema] value must conform to.
   ///
-  /// Refernce:
-  RegExp get pattern => _pattern;
+  /// Reference:
+  RegExp? get pattern => _pattern;
 
   /// A [List<JsonSchema>] which the value must conform to all of.
   ///
@@ -913,25 +958,25 @@ class JsonSchema {
   /// A [JsonSchema] which the value must NOT be.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.29
-  JsonSchema get notSchema => _notSchema;
+  JsonSchema? get notSchema => _notSchema;
 
   /// Ref to the URI of the [JsonSchema].
-  Uri get ref => _ref;
+  Uri? get ref => _ref;
 
   /// Title of the [JsonSchema].
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-7.2
-  String get title => _title;
+  String? get title => _title;
 
   /// List of allowable types for the [JsonSchema].
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.25
-  List<SchemaType> get typeList => _typeList;
+  List<SchemaType>? get typeList => _typeList;
 
   /// Single allowable type for the [JsonSchema].
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.25
-  SchemaType get type => _typeList?.length == 1 ? _typeList.single : null;
+  SchemaType? get type => _typeList?.length == 1 ? _typeList?.single : null;
 
   // --------------------------------------------------------------------------
   // Schema List Item Related Getters
@@ -940,22 +985,22 @@ class JsonSchema {
   /// Single [JsonSchema] sub items of this [JsonSchema] must conform to.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.9
-  JsonSchema get items => _items;
+  JsonSchema? get items => _items;
 
   /// Ordered list of [JsonSchema] which the value of the same index must conform to.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.9
-  List<JsonSchema> get itemsList => _itemsList;
+  List<JsonSchema>? get itemsList => _itemsList;
 
   /// Whether additional items are allowed.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.10
-  bool get additionalItemsBool => _additionalItemsBool;
+  bool? get additionalItemsBool => _additionalItemsBool;
 
   /// JsonSchema additional items should conform to.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.10
-  JsonSchema get additionalItemsSchema => _additionalItemsSchema;
+  JsonSchema? get additionalItemsSchema => _additionalItemsSchema;
 
   /// List of example instances for the [JsonSchema].
   ///
@@ -969,12 +1014,12 @@ class JsonSchema {
   /// The maximum number of items allowed.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.11
-  int get maxItems => _maxItems;
+  int? get maxItems => _maxItems;
 
   /// The minimum number of items allowed.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.12
-  int get minItems => _minItems;
+  int? get minItems => _minItems;
 
   /// Whether the items in the list must be unique.
   ///
@@ -993,32 +1038,32 @@ class JsonSchema {
   /// [JsonSchema] that property names must conform to.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.22
-  JsonSchema get propertyNamesSchema => _propertyNamesSchema;
+  JsonSchema? get propertyNamesSchema => _propertyNamesSchema;
 
   /// Whether additional properties, other than those specified, are allowed.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.20
-  bool get additionalPropertiesBool => _additionalProperties;
+  bool? get additionalPropertiesBool => _additionalProperties;
 
   /// [JsonSchema] that additional properties must conform to.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.20
-  JsonSchema get additionalPropertiesSchema => _additionalPropertiesSchema;
+  JsonSchema? get additionalPropertiesSchema => _additionalPropertiesSchema;
 
   /// [JsonSchema] definition that at least one item must match to be valid.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.14
-  JsonSchema get contains => _contains;
+  JsonSchema? get contains => _contains;
 
   /// The maximum number of properties allowed.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.15
-  int get maxProperties => _maxProperties;
+  int? get maxProperties => _maxProperties;
 
   /// The minimum number of properties allowed.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.16
-  int get minProperties => _minProperties;
+  int? get minProperties => _minProperties;
 
   /// Map of [JsonSchema]s for properties, based on [RegExp]s keys.
   ///
@@ -1028,7 +1073,7 @@ class JsonSchema {
   /// Map of property dependencies by property name.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.21
-  Map<String, List<String>> get propertyDependencies => _propertyDependencies;
+  Map<String, List<String>>? get propertyDependencies => _propertyDependencies;
 
   /// Map of sub-properties' and references' [JsonSchema]s by path.
   ///
@@ -1047,12 +1092,12 @@ This functionality will be removed in 3.0.
   /// Properties that must be inclueded for the [JsonSchema] to be valid.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.17
-  List<String> get requiredProperties => _requiredProperties;
+  List<String>? get requiredProperties => _requiredProperties;
 
   /// Map of schema dependencies by property name.
   ///
   /// Spec: https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.21
-  Map<String, JsonSchema> get schemaDependencies => _schemaDependencies;
+  Map<String, JsonSchema>? get schemaDependencies => _schemaDependencies;
 
   // --------------------------------------------------------------------------
   // Convenience Methods
@@ -1069,7 +1114,8 @@ This functionality will be removed in 3.0.
     // TODO: We probably shouldn't throw here, and properly support cyclical schemas, since they
     // are allowed in the spec.
     if (_pathsEncountered.contains(path))
-      throw FormatExceptions.error('Encountered path cycle ${_pathsEncountered}, adding $path');
+      throw FormatExceptions.error(
+          'Encountered path cycle ${_pathsEncountered}, adding $path');
 
     final referredTo = _schemaRefs[path];
     if (referredTo == null) {
@@ -1081,28 +1127,33 @@ This functionality will be removed in 3.0.
   }
 
   /// Name of the property of the current [JsonSchema] within its parent.
-  String get propertyName {
+  String? get propertyName {
     final pathUri = Uri.parse(path);
-    final pathFragments = pathUri.fragment?.split('/');
+    final pathFragments = pathUri.fragment.split('/');
     return pathFragments.length > 2 ? pathFragments.last : null;
   }
 
   /// Whether a given property is required for the [JsonSchema] instance to be valid.
-  bool propertyRequired(String property) => _requiredProperties != null && _requiredProperties.contains(property);
+  bool propertyRequired(String? property) =>
+      _requiredProperties != null && _requiredProperties!.contains(property);
 
   /// Whether the [JsonSchema] is required on its parent.
   bool get requiredOnParent => _parent?.propertyRequired(propertyName) ?? false;
 
   /// Validate [instance] against this schema, returning a boolean indicating whether
   /// validation succeeded or failed.
-  bool validate(dynamic instance, {bool reportMultipleErrors = false, bool parseJson = false}) =>
-      Validator(this).validate(instance, reportMultipleErrors: reportMultipleErrors, parseJson: parseJson);
+  bool validate(dynamic instance,
+          {bool reportMultipleErrors = false, bool parseJson = false}) =>
+      Validator(this).validate(instance,
+          reportMultipleErrors: reportMultipleErrors, parseJson: parseJson);
 
   /// Validate [instance] against this schema, returning a list of [ValidationError]
   /// objects with information about any validation errors that occurred.
-  List<ValidationError> validateWithErrors(dynamic instance, {bool parseJson = false}) {
+  List<ValidationError> validateWithErrors(dynamic instance,
+      {bool parseJson = false}) {
     final validator = Validator(this);
-    validator.validate(instance, reportMultipleErrors: true, parseJson: parseJson);
+    validator.validate(instance,
+        reportMultipleErrors: true, parseJson: parseJson);
     return validator.errorObjects;
   }
 
@@ -1142,15 +1193,18 @@ This functionality will be removed in 3.0.
   }
 
   /// Add a ref'd JsonSchema to the map of available Schemas.
-  JsonSchema _addSchemaToRefMap(String path, JsonSchema schema) => _refMap[path] = schema;
+  JsonSchema _addSchemaToRefMap(String path, JsonSchema schema) =>
+      _refMap[path] = schema;
 
   // Create a [JsonSchema] from a sub-schema of the root.
-  _makeSchema(String path, dynamic schema, SchemaAssigner assigner, {mustBeValid = true}) {
+  _makeSchema(String path, dynamic schema, SchemaAssigner assigner,
+      {mustBeValid = true}) {
     var throwError;
 
     if (schema is bool && schemaVersion != SchemaVersion.draft6)
       throwError = () => throw FormatExceptions.schema(path, schema);
-    if (schema is! Map && schema is! bool) throwError = () => throw FormatExceptions.schema(path, schema);
+    if (schema is! Map && schema is! bool)
+      throwError = () => throw FormatExceptions.schema(path, schema);
 
     if (throwError != null) {
       if (mustBeValid) throwError();
@@ -1187,10 +1241,12 @@ This functionality will be removed in 3.0.
   // --------------------------------------------------------------------------
 
   /// Validate, calculate and set the value of the 'allOf' JSON Schema prop.
-  _setAllOf(dynamic value) => _validateListOfSchema('allOf', value, (schema) => _allOf.add(schema));
+  _setAllOf(dynamic value) =>
+      _validateListOfSchema('allOf', value, (schema) => _allOf.add(schema));
 
   /// Validate, calculate and set the value of the 'anyOf' JSON Schema prop.
-  _setAnyOf(dynamic value) => _validateListOfSchema('anyOf', value, (schema) => _anyOf.add(schema));
+  _setAnyOf(dynamic value) =>
+      _validateListOfSchema('anyOf', value, (schema) => _anyOf.add(schema));
 
   /// Validate, calculate and set the value of the 'const' JSON Schema prop.
   _setConst(dynamic value) {
@@ -1203,25 +1259,32 @@ This functionality will be removed in 3.0.
 
   /// Validate, calculate and set the value of the 'definitions' JSON Schema prop.
   _setDefinitions(dynamic value) => (TypeValidators.object('definition', value))
-      .forEach((k, v) => _makeSchema('$_path/definitions/$k', v, (rhs) => _definitions[k] = rhs));
+      .forEach((k, v) => _makeSchema(
+          '$_path/definitions/$k', v, (rhs) => _definitions[k] = rhs));
 
   /// Validate, calculate and set the value of the 'description' JSON Schema prop.
-  _setDescription(dynamic value) => _description = TypeValidators.string('description', value);
+  _setDescription(dynamic value) =>
+      _description = TypeValidators.string('description', value);
 
   /// Validate, calculate and set the value of the 'enum' JSON Schema prop.
-  _setEnum(dynamic value) => _enumValues = TypeValidators.uniqueList('enum', value);
+  _setEnum(dynamic value) =>
+      _enumValues = TypeValidators.uniqueList('enum', value);
 
   /// Validate, calculate and set the value of the 'exclusiveMaximum' JSON Schema prop.
-  _setExclusiveMaximum(dynamic value) => _exclusiveMaximum = TypeValidators.boolean('exclusiveMaximum', value);
+  _setExclusiveMaximum(dynamic value) =>
+      _exclusiveMaximum = TypeValidators.boolean('exclusiveMaximum', value);
 
   /// Validate, calculate and set the value of the 'exclusiveMaximum' JSON Schema prop.
-  _setExclusiveMaximumV6(dynamic value) => _exclusiveMaximumV6 = TypeValidators.number('exclusiveMaximum', value);
+  _setExclusiveMaximumV6(dynamic value) =>
+      _exclusiveMaximumV6 = TypeValidators.number('exclusiveMaximum', value);
 
   /// Validate, calculate and set the value of the 'exclusiveMinimum' JSON Schema prop.
-  _setExclusiveMinimum(dynamic value) => _exclusiveMinimum = TypeValidators.boolean('exclusiveMinimum', value);
+  _setExclusiveMinimum(dynamic value) =>
+      _exclusiveMinimum = TypeValidators.boolean('exclusiveMinimum', value);
 
   /// Validate, calculate and set the value of the 'exclusiveMinimum' JSON Schema prop.
-  _setExclusiveMinimumV6(dynamic value) => _exclusiveMinimumV6 = TypeValidators.number('exclusiveMinimum', value);
+  _setExclusiveMinimumV6(dynamic value) =>
+      _exclusiveMinimumV6 = TypeValidators.number('exclusiveMinimum', value);
 
   /// Validate, calculate and set the value of the 'format' JSON Schema prop.
   _setFormat(dynamic value) => _format = TypeValidators.string('format', value);
@@ -1230,135 +1293,162 @@ This functionality will be removed in 3.0.
   _setId(dynamic value) {
     // First, just add the ref directly, as a fallback, and in case the ID has its own
     // unique origin (i.e. http://example1.com vs http://example2.com/)
-    _id = TypeValidators.uri('id', value);
+    Uri id = TypeValidators.uri('id', value);
 
     // If the current schema $id has no scheme.
-    if (_id.scheme.isEmpty) {
+    if (id.scheme.isEmpty) {
       // If the $id has a path and the root has a base, append it to the base.
-      if (_inheritedUriBase != null && _id.path != null && _id.path != '/' && _id.path.isNotEmpty) {
-        final path = _id.path.startsWith('/') ? _id.path : '/${_id.path}';
+      if (_inheritedUriBase != null && id.path != '/' && id.path.isNotEmpty) {
+        final path = id.path.startsWith('/') ? id.path : '/${id.path}';
         _id = Uri.parse('${_inheritedUriBase.toString()}$path');
 
         // If the $id has a fragment, append it to the base, or use it alone.
-      } else if (_id.fragment != null && _id.fragment.isNotEmpty) {
-        _id = Uri.parse('${_inheritedId ?? ''}#${_id.fragment}');
+      } else if (id.fragment.isNotEmpty) {
+        id = Uri.parse('${_inheritedId ?? ''}#${id.fragment}');
       }
     }
 
     try {
-      _idBase = JsonSchemaUtils.getBaseFromFullUri(_id);
+      _idBase = JsonSchemaUtils.getBaseFromFullUri(id);
     } catch (e) {
       // ID base can't be set for schemes other than HTTP(S).
       // This is expected behavior.
     }
 
     // Add the current schema to the ref map by its id, so it can be referenced elsewhere.
-    _addSchemaToRefMap(_id.toString(), this);
+    _addSchemaToRefMap(id.toString(), this);
+
+    _id = id;
+
     return _id;
   }
 
   /// Validate, calculate and set the value of the 'minimum' JSON Schema prop.
-  _setMinimum(dynamic value) => _minimum = TypeValidators.number('minimum', value);
+  _setMinimum(dynamic value) =>
+      _minimum = TypeValidators.number('minimum', value);
 
   /// Validate, calculate and set the value of the 'maximum' JSON Schema prop.
-  _setMaximum(dynamic value) => _maximum = TypeValidators.number('maximum', value);
+  _setMaximum(dynamic value) =>
+      _maximum = TypeValidators.number('maximum', value);
 
   /// Validate, calculate and set the value of the 'maxLength' JSON Schema prop.
-  _setMaxLength(dynamic value) => _maxLength = TypeValidators.nonNegativeInt('maxLength', value);
+  _setMaxLength(dynamic value) =>
+      _maxLength = TypeValidators.nonNegativeInt('maxLength', value);
 
   /// Validate, calculate and set the value of the 'minLength' JSON Schema prop.
-  _setMinLength(dynamic value) => _minLength = TypeValidators.nonNegativeInt('minLength', value);
+  _setMinLength(dynamic value) =>
+      _minLength = TypeValidators.nonNegativeInt('minLength', value);
 
   /// Validate, calculate and set the value of the 'multiple' JSON Schema prop.
-  _setMultipleOf(dynamic value) => _multipleOf = TypeValidators.nonNegativeNum('multiple', value);
+  _setMultipleOf(dynamic value) =>
+      _multipleOf = TypeValidators.nonNegativeNum('multiple', value);
 
   /// Validate, calculate and set the value of the 'not' JSON Schema prop.
   _setNot(dynamic value) {
-    if (value is Map || value is bool && schemaVersion == SchemaVersion.draft6) {
+    if (value is Map ||
+        value is bool && schemaVersion == SchemaVersion.draft6) {
       _makeSchema('$_path/not', value, (rhs) => _notSchema = rhs);
     } else {
-      throw FormatExceptions.error('items must be object (or boolean in draft6 and later): $value');
+      throw FormatExceptions.error(
+          'items must be object (or boolean in draft6 and later): $value');
     }
   }
 
   /// Validate, calculate and set the value of the 'oneOf' JSON Schema prop.
-  _setOneOf(dynamic value) => _validateListOfSchema('oneOf', value, (schema) => _oneOf.add(schema));
+  _setOneOf(dynamic value) =>
+      _validateListOfSchema('oneOf', value, (schema) => _oneOf.add(schema));
 
   /// Validate, calculate and set the value of the 'pattern' JSON Schema prop.
-  _setPattern(dynamic value) => _pattern = RegExp(TypeValidators.string('pattern', value));
+  _setPattern(dynamic value) =>
+      _pattern = RegExp(TypeValidators.string('pattern', value));
 
   /// Validate, calculate and set the value of the 'propertyNames' JSON Schema prop.
   _setPropertyNames(dynamic value) {
-    if (value is Map || value is bool && schemaVersion == SchemaVersion.draft6) {
-      _makeSchema('$_path/propertyNames', value, (rhs) => _propertyNamesSchema = rhs);
+    if (value is Map ||
+        value is bool && schemaVersion == SchemaVersion.draft6) {
+      _makeSchema(
+          '$_path/propertyNames', value, (rhs) => _propertyNamesSchema = rhs);
     } else {
-      throw FormatExceptions.error('items must be object (or boolean in draft6 and later): $value');
+      throw FormatExceptions.error(
+          'items must be object (or boolean in draft6 and later): $value');
     }
   }
 
   /// Validate, calculate and set the value of the '$ref' JSON Schema prop.
   _setRef(dynamic value) {
-    _ref = TypeValidators.uri(r'$ref', value);
+    Uri ref = TypeValidators.uri(r'$ref', value);
+
     final Uri originalRef = Uri.parse(_ref.toString());
     // TODO: add a more advanced check to find out if the $ref is local.
     // Does it have a fragment? Append the base and check if it exists in the _refMap
     // Does it have a path? Append the base and check if it exists in the _refMap
-    if (_ref.scheme.isEmpty) {
+    if (ref.scheme.isEmpty) {
       /// If the $id has a path and the root has a base, append it to the base.
-      if (_inheritedUriBase != null && _ref.path != null && _ref.path != '/' && _ref.path.isNotEmpty) {
-        final path = _ref.path.startsWith('/') ? _ref.path : '/${_ref.path}';
+      if (_inheritedUriBase != null && ref.path != '/' && ref.path.isNotEmpty) {
+        final path = ref.path.startsWith('/') ? ref.path : '/${ref.path}';
         var template = '${_inheritedUriBase.toString()}$path';
-        if (_ref.fragment != null && _ref.fragment.isNotEmpty) {
-          template += '#${_ref.fragment}';
+        if (ref.fragment.isNotEmpty) {
+          template += '#${ref.fragment}';
         }
-        _ref = Uri.parse(template);
+        ref = Uri.parse(template);
         // If the $id has a fragment, append it to the base, or use it alone.
-      } else if (_ref.fragment != null && _ref.fragment.isNotEmpty) {
-        _ref = Uri.parse('${_inheritedUri ?? ''}#${_ref.fragment}');
+      } else if (ref.fragment.isNotEmpty) {
+        ref = Uri.parse('${_inheritedUri ?? ''}#${ref.fragment}');
       }
     }
 
     // The ref's base is a relative file path, so it should be treated as a relative file URI
-    final isRelativeFileUri = _inheritedUriBase != null && _inheritedUriBase.scheme.isEmpty;
-    if (_ref.scheme.isNotEmpty || isRelativeFileUri) {
+    final isRelativeFileUri =
+        _inheritedUriBase != null && _inheritedUriBase!.scheme.isEmpty;
+    if (ref.scheme.isNotEmpty || isRelativeFileUri) {
       // TODO: should we do something if the ref is a fragment?
-      final addSchemaFunction = (JsonSchema schema) {
+      final addSchemaFunction = (JsonSchema? schema) {
         if (schema != null) {
           // Set referenced schema's path should be equivalent to the $ref value.
           // Otherwise it's set as `/`, which doesn't help track down
           // the source of validation errors.
-          schema._path = _ref.toString() + '/';
-          _addSchemaToRefMap(_ref.toString(), schema);
+          schema._path = ref.toString() + '/';
+          _addSchemaToRefMap(ref.toString(), schema);
           return _addSchemaToRefMap(originalRef.toString(), schema);
         } else {
           throw FormatExceptions.error(
-              'Couldn\'t resolve ref: ${_ref} using the ${_refProviderAsync != null ? 'provided' : 'default HTTP(S)'} ref provider.');
+              'Couldn\'t resolve ref: ${ref} using the ${_refProviderAsync != null ? 'provided' : 'default HTTP(S)'} ref provider.');
         }
       };
 
-      final AsyncRetrievalOperation asyncRefSchemaOperation = _refProviderAsync == null
-          ? () => createSchemaFromUrl(_ref.toString()).then(addSchemaFunction)
-          : () => _refProviderAsync(_ref.toString()).then(addSchemaFunction);
+      final AsyncRetrievalOperation asyncRefSchemaOperation =
+          _refProviderAsync == null
+              ? () =>
+                  createSchemaFromUrl(ref.toString()).then(addSchemaFunction)
+              : () =>
+                  _refProviderAsync!(ref.toString()).then(addSchemaFunction);
 
-      final SyncRetrievalOperation syncRefSchemaOperation =
-          _refProvider != null ? () => addSchemaFunction(_refProvider(_ref.toString())) : null;
+      final SyncRetrievalOperation? syncRefSchemaOperation =
+          _refProvider != null
+              ? () => addSchemaFunction(_refProvider!(ref.toString()))
+              : null;
 
       /// Always add sub-schema retrieval requests to the [_root], as this is where the promise resolves.
-      _root._retrievalRequests.add(RetrievalRequest()
-        ..schemaUri = _ref
+      _root!._retrievalRequests.add(RetrievalRequest()
+        ..schemaUri = ref
         ..asyncRetrievalOperation = asyncRefSchemaOperation
         ..syncRetrievalOperation = syncRefSchemaOperation);
+
+      _ref = ref;
     }
   }
 
-  /// Dertermine which schema version to use.
+  /// Determine which schema version to use.
   ///
   /// Note: Uses the user specified version first, then the version set on the schema JSON, then the default.
-  static SchemaVersion _getSchemaVersion(SchemaVersion userSchemaVersion, dynamic schema) {
+  static SchemaVersion _getSchemaVersion(
+      SchemaVersion? userSchemaVersion, dynamic schema) {
     if (userSchemaVersion != null) {
-      return TypeValidators.jsonSchemaVersion4Or6(r'$schema', userSchemaVersion.toString());
+      return TypeValidators.jsonSchemaVersion4Or6(
+          r'$schema', userSchemaVersion.toString());
     } else if (schema is Map && schema[r'$schema'] is String) {
-      return TypeValidators.jsonSchemaVersion4Or6(r'$schema', schema[r'$schema']);
+      return TypeValidators.jsonSchemaVersion4Or6(
+          r'$schema', schema[r'$schema']);
     }
     return SchemaVersion.draft6;
   }
@@ -1375,16 +1465,19 @@ This functionality will be removed in 3.0.
 
   /// Validate, calculate and set items of the 'pattern' JSON Schema prop that are also [JsonSchema]s.
   _setItems(dynamic value) {
-    if (value is Map || value is bool && schemaVersion == SchemaVersion.draft6) {
+    if (value is Map ||
+        value is bool && schemaVersion == SchemaVersion.draft6) {
       _makeSchema('$_path/items', value, (rhs) => _items = rhs);
     } else if (value is List) {
       int index = 0;
-      _itemsList = List(value.length);
+      _itemsList = []; // List(value.length);
       for (int i = 0; i < value.length; i++) {
-        _makeSchema('$_path/items/${index++}', value[i], (rhs) => _itemsList[i] = rhs);
+        _makeSchema(
+            '$_path/items/${index++}', value[i], (rhs) => _itemsList![i] = rhs);
       }
     } else {
-      throw FormatExceptions.error('items must be object or array (or boolean in draft6 and later): $value');
+      throw FormatExceptions.error(
+          'items must be object or array (or boolean in draft6 and later): $value');
     }
   }
 
@@ -1393,61 +1486,80 @@ This functionality will be removed in 3.0.
     if (value is bool) {
       _additionalItemsBool = value;
     } else if (value is Map) {
-      _makeSchema('$_path/additionalItems', value, (rhs) => _additionalItemsSchema = rhs);
+      _makeSchema('$_path/additionalItems', value,
+          (rhs) => _additionalItemsSchema = rhs);
     } else {
-      throw FormatExceptions.error('additionalItems must be boolean or object: $value');
+      throw FormatExceptions.error(
+          'additionalItems must be boolean or object: $value');
     }
   }
 
   /// Validate, calculate and set the value of the 'contains' JSON Schema prop.
-  _setContains(dynamic value) => _makeSchema('$_path/contains', value, (rhs) => _contains = rhs);
+  _setContains(dynamic value) =>
+      _makeSchema('$_path/contains', value, (rhs) => _contains = rhs);
 
   /// Validate, calculate and set the value of the 'examples' JSON Schema prop.
-  _setExamples(dynamic value) => _examples = TypeValidators.list('examples', value);
+  _setExamples(dynamic value) =>
+      _examples = TypeValidators.list('examples', value);
 
   /// Validate, calculate and set the value of the 'maxItems' JSON Schema prop.
-  _setMaxItems(dynamic value) => _maxItems = TypeValidators.nonNegativeInt('maxItems', value);
+  _setMaxItems(dynamic value) =>
+      _maxItems = TypeValidators.nonNegativeInt('maxItems', value);
 
   /// Validate, calculate and set the value of the 'minItems' JSON Schema prop.
-  _setMinItems(dynamic value) => _minItems = TypeValidators.nonNegativeInt('minItems', value);
+  _setMinItems(dynamic value) =>
+      _minItems = TypeValidators.nonNegativeInt('minItems', value);
 
   /// Validate, calculate and set the value of the 'uniqueItems' JSON Schema prop.
-  _setUniqueItems(dynamic value) => _uniqueItems = TypeValidators.boolean('uniqueItems', value);
+  _setUniqueItems(dynamic value) =>
+      _uniqueItems = TypeValidators.boolean('uniqueItems', value);
 
   // --------------------------------------------------------------------------
   // Schema Sub-Property Related Property Setters
   // --------------------------------------------------------------------------
 
   /// Validate, calculate and set sub-items or properties of the schema that are also [JsonSchema]s.
-  _setProperties(dynamic value) => (TypeValidators.object('properties', value)).forEach((property, subSchema) =>
-      _makeSchema('$_path/properties/$property', subSchema, (rhs) => _properties[property] = rhs));
+  _setProperties(dynamic value) => (TypeValidators.object('properties', value))
+      .forEach((property, subSchema) => _makeSchema(
+          '$_path/properties/$property',
+          subSchema,
+          (rhs) => _properties[property] = rhs));
 
   /// Validate, calculate and set the value of the 'additionalProperties' JSON Schema prop.
   _setAdditionalProperties(dynamic value) {
     if (value is bool) {
       _additionalProperties = value;
     } else if (value is Map) {
-      _makeSchema('$_path/additionalProperties', value, (rhs) => _additionalPropertiesSchema = rhs);
+      _makeSchema('$_path/additionalProperties', value,
+          (rhs) => _additionalPropertiesSchema = rhs);
     } else {
-      throw FormatExceptions.error('additionalProperties must be a bool or valid schema object: $value');
+      throw FormatExceptions.error(
+          'additionalProperties must be a bool or valid schema object: $value');
     }
   }
 
   /// Validate, calculate and set the value of the 'dependencies' JSON Schema prop.
-  _setDependencies(dynamic value) => (TypeValidators.object('dependencies', value)).forEach((k, v) {
+  _setDependencies(dynamic value) =>
+      (TypeValidators.object('dependencies', value)).forEach((k, v) {
         if (v is Map || v is bool && schemaVersion == SchemaVersion.draft6) {
-          _makeSchema('$_path/dependencies/$k', v, (rhs) => _schemaDependencies[k] = rhs);
+          _makeSchema('$_path/dependencies/$k', v,
+              (rhs) => _schemaDependencies[k] = rhs);
         } else if (v is List) {
           // Dependencies must have contents in draft4, but can be empty in draft6 and later
           if (schemaVersion == SchemaVersion.draft4) {
-            if (v.length == 0) throw FormatExceptions.error('property dependencies must be non-empty array');
+            if (v.length == 0)
+              throw FormatExceptions.error(
+                  'property dependencies must be non-empty array');
           }
 
           final Set uniqueDeps = Set();
           v.forEach((propDep) {
-            if (propDep is! String) throw FormatExceptions.string('propertyDependency', v);
+            if (propDep is! String)
+              throw FormatExceptions.string('propertyDependency', v);
 
-            if (uniqueDeps.contains(propDep)) throw FormatExceptions.error('property dependencies must be unique: $v');
+            if (uniqueDeps.contains(propDep))
+              throw FormatExceptions.error(
+                  'property dependencies must be unique: $v');
 
             _propertyDependencies.putIfAbsent(k, () => []).add(propDep);
             uniqueDeps.add(propDep);
@@ -1459,20 +1571,28 @@ This functionality will be removed in 3.0.
       });
 
   /// Validate, calculate and set the value of the 'maxProperties' JSON Schema prop.
-  _setMaxProperties(dynamic value) => _maxProperties = TypeValidators.nonNegativeInt('maxProperties', value);
+  _setMaxProperties(dynamic value) =>
+      _maxProperties = TypeValidators.nonNegativeInt('maxProperties', value);
 
   /// Validate, calculate and set the value of the 'minProperties' JSON Schema prop.
-  _setMinProperties(dynamic value) => _minProperties = TypeValidators.nonNegativeInt('minProperties', value);
+  _setMinProperties(dynamic value) =>
+      _minProperties = TypeValidators.nonNegativeInt('minProperties', value);
 
   /// Validate, calculate and set the value of the 'patternProperties' JSON Schema prop.
-  _setPatternProperties(dynamic value) => (TypeValidators.object('patternProperties', value))
-      .forEach((k, v) => _makeSchema('$_path/patternProperties/$k', v, (rhs) => _patternProperties[RegExp(k)] = rhs));
+  _setPatternProperties(dynamic value) =>
+      (TypeValidators.object('patternProperties', value)).forEach((k, v) =>
+          _makeSchema('$_path/patternProperties/$k', v,
+              (rhs) => _patternProperties[RegExp(k)] = rhs));
 
   /// Validate, calculate and set the value of the 'required' JSON Schema prop.
   _setRequired(dynamic value) =>
-      _requiredProperties = (TypeValidators.nonEmptyList('required', value))?.map((value) => value as String)?.toList();
+      _requiredProperties = (TypeValidators.nonEmptyList('required', value))
+          .map((value) => value as String)
+          .toList();
 
   /// Validate, calculate and set the value of the 'required' JSON Schema prop.
   _setRequiredV6(dynamic value) =>
-      _requiredProperties = (TypeValidators.list('required', value))?.map((value) => value as String)?.toList();
+      _requiredProperties = (TypeValidators.list('required', value))
+          .map((value) => value as String)
+          .toList();
 }

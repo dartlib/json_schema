@@ -36,18 +36,20 @@
 //     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //     THE SOFTWARE.
 
-import 'dart:convert';
-import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:convert' as convert;
+import 'dart:io';
 
 import 'package:json_schema/src/json_schema/constants.dart';
 import 'package:json_schema/src/json_schema/json_schema.dart';
 import 'package:json_schema/src/json_schema/utils.dart';
 
-Future<JsonSchema> createSchemaFromUrlVm(String schemaUrl, {SchemaVersion schemaVersion}) async {
+Future<JsonSchema> createSchemaFromUrlVm(String schemaUrl,
+    {SchemaVersion? schemaVersion}) async {
   final uriWithFrag = Uri.parse(schemaUrl);
-  final uri = schemaUrl.endsWith('#') ? uriWithFrag : uriWithFrag.removeFragment();
+  final uri =
+      schemaUrl.endsWith('#') ? uriWithFrag : uriWithFrag.removeFragment();
   Map schemaMap;
   if (uri.scheme == 'http' || uri.scheme == 'https') {
     // Setup the HTTP request.
@@ -62,13 +64,18 @@ Future<JsonSchema> createSchemaFromUrlVm(String schemaUrl, {SchemaVersion schema
     final schemaText = await convert.Utf8Decoder().bind(response).join();
     schemaMap = json.decode(schemaText);
   } else if (uri.scheme == 'file' || uri.scheme == '') {
-    final fileString = await File(uri.scheme == 'file' ? uri.toFilePath() : schemaUrl).readAsString();
+    final fileString =
+        await File(uri.scheme == 'file' ? uri.toFilePath() : schemaUrl)
+            .readAsString();
     schemaMap = json.decode(fileString);
   } else {
-    throw FormatException('Url schema must be http, file, or empty: $schemaUrl');
+    throw FormatException(
+        'Url schema must be http, file, or empty: $schemaUrl');
   }
   // HTTP servers / file systems ignore fragments, so resolve a sub-map if a fragment was specified.
-  final parentSchema = await JsonSchema.createSchemaAsync(schemaMap, schemaVersion: schemaVersion, fetchedFromUri: uri);
-  final schema = JsonSchemaUtils.getSubMapFromFragment(parentSchema, uriWithFrag);
+  final parentSchema = await JsonSchema.createSchemaAsync(schemaMap,
+      schemaVersion: schemaVersion, fetchedFromUri: uri);
+  final schema =
+      JsonSchemaUtils.getSubMapFromFragment(parentSchema, uriWithFrag);
   return schema ?? parentSchema;
 }
